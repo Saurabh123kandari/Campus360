@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,97 +7,153 @@ import {
   TouchableOpacity,
   SafeAreaView,
   TextInput,
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
+import ProfileIcon from '../../components/ProfileIcon';
+
+interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'parent' | 'teacher' | 'admin';
+  content: string;
+  timestamp: string;
+  isRead: boolean;
+  type: 'message' | 'task' | 'announcement';
+  taskId?: string;
+}
+
+interface ChatThread {
+  id: string;
+  title: string;
+  participants: string[];
+  lastMessage?: Message;
+  unreadCount: number;
+  isActive: boolean;
+}
 
 const ChatScreen = () => {
   const { user } = useAuth();
-  const { events } = useData();
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const { students, events } = useData();
+  const [activeThread, setActiveThread] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [loading, setLoading] = useState(true);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    // Initialize with some demo messages
-    const demoMessages = [
-      {
-        id: 'msg-1',
-        sender: 'teacher',
-        senderName: 'Ms. Sarah Wilson',
-        message: 'Good morning! Alex had a great day in class today. He participated actively in the science experiment.',
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        type: 'message',
-      },
-      {
-        id: 'msg-2',
-        sender: 'parent',
-        senderName: user?.fullName || 'Parent',
-        message: 'Thank you for the update! I\'m glad to hear Alex is doing well.',
-        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        type: 'message',
-      },
-      {
-        id: 'msg-3',
-        sender: 'teacher',
-        senderName: 'Ms. Sarah Wilson',
-        message: 'I\'ve created a new task for Alex to complete by next week.',
-        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        type: 'task',
-        taskId: 'task-1',
-        taskTitle: 'Complete Science Project',
-        taskDescription: 'Research and present findings on renewable energy sources.',
-        taskDueDate: '2024-02-20',
-      },
-      {
-        id: 'msg-4',
-        sender: 'parent',
-        senderName: user?.fullName || 'Parent',
-        message: 'I\'ll make sure Alex completes the science project on time. Thank you for the reminder.',
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        type: 'message',
-      },
-    ];
-    
-    setMessages(demoMessages);
-  }, [user]);
+    loadChatData();
+  }, []);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const loadChatData = async () => {
+    try {
+      setLoading(true);
+      
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-    const message = {
-      id: `msg-${Date.now()}`,
-      sender: 'parent',
-      senderName: user?.fullName || 'Parent',
-      message: newMessage.trim(),
-      timestamp: new Date().toISOString(),
-      type: 'message',
-    };
+      const child = students.find(s => s.id === user?.childId);
+      if (!child) {
+        setLoading(false);
+        return;
+      }
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
-    setIsTyping(true);
+      // Mock chat threads
+      const mockThreads: ChatThread[] = [
+        {
+          id: 'thread-1',
+          title: `Chat with ${child.name}'s Teacher`,
+          participants: [user?.id || '', 'teacher-1'],
+          lastMessage: {
+            id: 'msg-1',
+            senderId: 'teacher-1',
+            senderName: 'Ms. Johnson',
+            senderRole: 'teacher',
+            content: `${child.name} had a great day today!`,
+            timestamp: '2024-01-20T10:30:00Z',
+            isRead: false,
+            type: 'message',
+          },
+          unreadCount: 2,
+          isActive: false,
+        },
+        {
+          id: 'thread-2',
+          title: 'School Administration',
+          participants: [user?.id || '', 'admin-1'],
+          lastMessage: {
+            id: 'msg-2',
+            senderId: 'admin-1',
+            senderName: 'School Office',
+            senderRole: 'admin',
+            content: 'Important announcement about school events',
+            timestamp: '2024-01-19T16:45:00Z',
+            isRead: true,
+            type: 'announcement',
+          },
+          unreadCount: 0,
+          isActive: false,
+        },
+      ];
 
-    // Simulate teacher response
-    setTimeout(() => {
-      const teacherResponse = {
-        id: `msg-${Date.now() + 1}`,
-        sender: 'teacher',
-        senderName: 'Ms. Sarah Wilson',
-        message: 'Thank you for your message. I\'ll get back to you soon.',
-        timestamp: new Date().toISOString(),
-        type: 'message',
-      };
-      setMessages(prev => [...prev, teacherResponse]);
-      setIsTyping(false);
-    }, 2000);
-  };
+      // Mock messages for active thread
+      const mockMessages: Message[] = [
+        {
+          id: 'msg-1',
+          senderId: 'teacher-1',
+          senderName: 'Ms. Johnson',
+          senderRole: 'teacher',
+          content: `Hello! ${child.name} had a wonderful day today. They participated actively in all activities.`,
+          timestamp: '2024-01-20T10:30:00Z',
+          isRead: true,
+          type: 'message',
+        },
+        {
+          id: 'msg-2',
+          senderId: user?.id || '',
+          senderName: user?.fullName || '',
+          senderRole: 'parent',
+          content: 'Thank you for the update! That\'s great to hear.',
+          timestamp: '2024-01-20T10:35:00Z',
+          isRead: true,
+          type: 'message',
+        },
+        {
+          id: 'msg-3',
+          senderId: 'teacher-1',
+          senderName: 'Ms. Johnson',
+          senderRole: 'teacher',
+          content: 'I\'ve assigned a new math homework for tomorrow.',
+          timestamp: '2024-01-20T11:00:00Z',
+          isRead: true,
+          type: 'task',
+          taskId: 'task-1',
+        },
+        {
+          id: 'msg-4',
+          senderId: 'teacher-1',
+          senderName: 'Ms. Johnson',
+          senderRole: 'teacher',
+          content: 'Please ensure they complete pages 45-50 in their workbook.',
+          timestamp: '2024-01-20T11:01:00Z',
+          isRead: false,
+          type: 'message',
+        },
+      ];
 
-  const handleViewTask = (taskId: string) => {
-    // In a real app, this would navigate to the task details
-    console.log('View task:', taskId);
+      setChatThreads(mockThreads);
+      setMessages(mockMessages);
+    } catch (error) {
+      console.error('Error loading chat data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatTime = (timestamp: string) => {
@@ -111,7 +167,8 @@ const ChatScreen = () => {
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
     const today = new Date();
-    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
       return 'Today';
@@ -125,101 +182,267 @@ const ChatScreen = () => {
     }
   };
 
-  const renderMessage = (message: any, index: number) => {
-    const isParent = message.sender === 'parent';
-    const showDate = index === 0 || 
-      formatDate(message.timestamp) !== formatDate(messages[index - 1].timestamp);
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'parent':
+        return '#28A745';
+      case 'teacher':
+        return '#2F6FED';
+      case 'admin':
+        return '#DC3545';
+      default:
+        return '#6C757D';
+    }
+  };
 
-    return (
-      <View key={message.id}>
-        {showDate && (
-          <View style={styles.dateSeparator}>
-            <Text style={styles.dateText}>{formatDate(message.timestamp)}</Text>
-          </View>
-        )}
-        
-        {message.type === 'task' ? (
-          <View style={styles.taskMessage}>
-            <View style={styles.taskHeader}>
-              <Text style={styles.taskSender}>{message.senderName}</Text>
-              <Text style={styles.taskTime}>{formatTime(message.timestamp)}</Text>
-            </View>
-            <Text style={styles.taskMessageText}>{message.message}</Text>
-            <View style={styles.taskCard}>
-              <Text style={styles.taskTitle}>{message.taskTitle}</Text>
-              <Text style={styles.taskDescription}>{message.taskDescription}</Text>
-              <Text style={styles.taskDueDate}>Due: {message.taskDueDate}</Text>
-              <TouchableOpacity
-                style={styles.viewTaskButton}
-                onPress={() => handleViewTask(message.taskId)}
-              >
-                <Text style={styles.viewTaskButtonText}>View Task</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={[
-            styles.messageContainer,
-            isParent ? styles.parentMessage : styles.teacherMessage
-          ]}>
-            <View style={styles.messageHeader}>
-              <Text style={styles.messageSender}>{message.senderName}</Text>
-              <Text style={styles.messageTime}>{formatTime(message.timestamp)}</Text>
-            </View>
-            <Text style={styles.messageText}>{message.message}</Text>
-          </View>
-        )}
-      </View>
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'parent':
+        return '👨‍👩‍👧‍👦';
+      case 'teacher':
+        return '👩‍🏫';
+      case 'admin':
+        return '🏫';
+      default:
+        return '👤';
+    }
+  };
+
+  const getMessageTypeIcon = (type: string) => {
+    switch (type) {
+      case 'task':
+        return '📝';
+      case 'announcement':
+        return '📢';
+      default:
+        return '💬';
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (!message.trim() || !activeThread) return;
+
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      senderId: user?.id || '',
+      senderName: user?.fullName || '',
+      senderRole: 'parent',
+      content: message.trim(),
+      timestamp: new Date().toISOString(),
+      isRead: false,
+      type: 'message',
+    };
+
+    setMessages(prev => [...prev, newMessage]);
+    setMessage('');
+
+    // Auto-scroll to bottom
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  const handleThreadSelect = (threadId: string) => {
+    setActiveThread(threadId);
+    // Mark messages as read
+    setChatThreads(prev =>
+      prev.map(thread =>
+        thread.id === threadId ? { ...thread, unreadCount: 0, isActive: true } : { ...thread, isActive: false }
+      )
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chat</Text>
-        <Text style={styles.headerSubtitle}>Ms. Sarah Wilson (Class Teacher)</Text>
+  const handleViewTask = (taskId: string) => {
+    Alert.alert('Task Details', `Viewing task: ${taskId}`, [
+      { text: 'View in Calendar', onPress: () => Alert.alert('Navigation', 'Opening Calendar...') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const handleNewChat = () => {
+    Alert.alert('New Chat', 'Starting a new conversation with school staff...');
+  };
+
+  const renderChatList = () => (
+    <View style={styles.chatListContainer}>
+      <View style={styles.chatListHeader}>
+        <Text style={styles.chatListTitle}>Messages</Text>
+        <TouchableOpacity style={styles.newChatButton} onPress={handleNewChat}>
+          <Text style={styles.newChatButtonText}>+ New</Text>
+        </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView 
-        style={styles.chatContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView 
+      {chatThreads.map((thread) => (
+        <TouchableOpacity
+          key={thread.id}
+          style={[
+            styles.chatThreadItem,
+            thread.isActive && styles.activeChatThread,
+          ]}
+          onPress={() => handleThreadSelect(thread.id)}
+        >
+          <View style={styles.threadInfo}>
+            <Text style={styles.threadTitle}>{thread.title}</Text>
+            {thread.lastMessage && (
+              <Text style={styles.lastMessage} numberOfLines={1}>
+                {thread.lastMessage.content}
+              </Text>
+            )}
+          </View>
+          <View style={styles.threadMeta}>
+            {thread.lastMessage && (
+              <Text style={styles.lastMessageTime}>
+                {formatTime(thread.lastMessage.timestamp)}
+              </Text>
+            )}
+            {thread.unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadCount}>{thread.unreadCount}</Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderChatMessages = () => {
+    if (!activeThread) {
+      return (
+        <View style={styles.emptyChatContainer}>
+          <Text style={styles.emptyChatIcon}>💬</Text>
+          <Text style={styles.emptyChatTitle}>Select a Chat</Text>
+          <Text style={styles.emptyChatSubtitle}>
+            Choose a conversation from the list to start messaging.
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.chatContainer}>
+        <View style={styles.chatHeader}>
+          <Text style={styles.chatTitle}>
+            {chatThreads.find(thread => thread.id === activeThread)?.title}
+          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setActiveThread(null)}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          ref={scrollViewRef}
           style={styles.messagesContainer}
-          showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.messagesContent}
         >
-          {messages.map((message, index) => renderMessage(message, index))}
-          
-          {isTyping && (
-            <View style={styles.typingIndicator}>
-              <Text style={styles.typingText}>Ms. Sarah Wilson is typing...</Text>
+          {messages.map((msg) => (
+            <View
+              key={msg.id}
+              style={[
+                styles.messageContainer,
+                msg.senderId === user?.id && styles.ownMessage,
+              ]}
+            >
+              <View style={styles.messageHeader}>
+                <Text style={styles.senderName}>{msg.senderName}</Text>
+                <Text style={styles.messageTime}>
+                  {formatTime(msg.timestamp)}
+                </Text>
+              </View>
+              
+              {msg.type === 'task' ? (
+                <View style={styles.taskMessage}>
+                  <Text style={styles.taskIcon}>📝</Text>
+                  <View style={styles.taskContent}>
+                    <Text style={styles.taskTitle}>New Assignment</Text>
+                    <Text style={styles.messageContent}>{msg.content}</Text>
+                    <TouchableOpacity
+                      style={styles.viewTaskButton}
+                      onPress={() => handleViewTask(msg.taskId || '')}
+                    >
+                      <Text style={styles.viewTaskButtonText}>View Task</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <Text style={styles.messageContent}>{msg.content}</Text>
+              )}
+              
+              <View style={styles.messageFooter}>
+                <Text style={styles.messageTypeIcon}>
+                  {getMessageTypeIcon(msg.type)}
+                </Text>
+                <View style={styles.messageRole}>
+                  <Text style={styles.roleIcon}>
+                    {getRoleIcon(msg.senderRole)}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.roleText,
+                      { color: getRoleColor(msg.senderRole) },
+                    ]}
+                  >
+                    {msg.senderRole}
+                  </Text>
+                </View>
+              </View>
             </View>
-          )}
+          ))}
         </ScrollView>
 
-        <View style={styles.inputContainer}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.messageInputContainer}
+        >
           <TextInput
-            style={styles.textInput}
-            value={newMessage}
-            onChangeText={setNewMessage}
-            placeholder="Type your message..."
-            placeholderTextColor="#999"
+            style={styles.messageInput}
+            value={message}
+            onChangeText={setMessage}
+            placeholder="Type a message..."
             multiline
             maxLength={500}
           />
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              !newMessage.trim() && styles.sendButtonDisabled
-            ]}
+            style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
             onPress={handleSendMessage}
-            disabled={!newMessage.trim()}
+            disabled={!message.trim()}
           >
             <Text style={styles.sendButtonText}>Send</Text>
           </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </View>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2F6FED" />
+        <Text style={styles.loadingText}>Loading messages...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>💬 Chat</Text>
+            <Text style={styles.headerSubtitle}>
+              Communicate with teachers and school staff
+            </Text>
+          </View>
+          <ProfileIcon />
         </View>
-      </KeyboardAvoidingView>
+      </View>
+
+      <View style={styles.content}>
+        {!activeThread ? renderChatList() : renderChatMessages()}
+      </View>
     </SafeAreaView>
   );
 };
@@ -229,52 +452,190 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
   header: {
     backgroundColor: '#2F6FED',
-    padding: 20,
     paddingTop: 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#E3F2FD',
-    marginTop: 4,
+    color: '#B3D4FF',
+  },
+  content: {
+    flex: 1,
+  },
+  chatListContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  chatListHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  chatListTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+  },
+  newChatButton: {
+    backgroundColor: '#2F6FED',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  newChatButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  chatThreadItem: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activeChatThread: {
+    backgroundColor: '#E3F2FD',
+    borderWidth: 2,
+    borderColor: '#2F6FED',
+  },
+  threadInfo: {
+    flex: 1,
+  },
+  threadTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: '#666',
+  },
+  threadMeta: {
+    alignItems: 'flex-end',
+  },
+  lastMessageTime: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  unreadBadge: {
+    backgroundColor: '#DC3545',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unreadCount: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  emptyChatContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyChatIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyChatTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptyChatSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   chatContainer: {
     flex: 1,
   },
+  chatHeader: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chatTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  backButton: {
+    padding: 8,
+  },
+  backButtonText: {
+    color: '#2F6FED',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   messagesContainer: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
   },
   messagesContent: {
     padding: 16,
-    paddingBottom: 20,
-  },
-  dateSeparator: {
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  dateText: {
-    fontSize: 12,
-    color: '#666',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
   },
   messageContainer: {
-    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
     maxWidth: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  parentMessage: {
+  ownMessage: {
+    backgroundColor: '#E3F2FD',
     alignSelf: 'flex-end',
-  },
-  teacherMessage: {
-    alignSelf: 'flex-start',
   },
   messageHeader: {
     flexDirection: 'row',
@@ -282,112 +643,90 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  messageSender: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#666',
+  senderName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
   messageTime: {
-    fontSize: 11,
-    color: '#999',
-  },
-  messageText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#333',
-  },
-  taskMessage: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  taskHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  taskSender: {
     fontSize: 12,
-    fontWeight: '500',
     color: '#666',
   },
-  taskTime: {
-    fontSize: 11,
-    color: '#999',
-  },
-  taskMessageText: {
-    fontSize: 14,
+  messageContent: {
+    fontSize: 16,
     color: '#333',
-    marginBottom: 12,
+    lineHeight: 22,
+    marginBottom: 8,
   },
-  taskCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
+  taskMessage: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  taskIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  taskContent: {
+    flex: 1,
   },
   taskTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#2F6FED',
     marginBottom: 4,
-  },
-  taskDescription: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 8,
-  },
-  taskDueDate: {
-    fontSize: 11,
-    color: '#999',
-    marginBottom: 8,
   },
   viewTaskButton: {
     backgroundColor: '#2F6FED',
-    paddingVertical: 6,
     paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 6,
     alignSelf: 'flex-start',
+    marginTop: 8,
   },
   viewTaskButtonText: {
     color: '#fff',
     fontSize: 12,
+    fontWeight: '600',
+  },
+  messageFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  messageTypeIcon: {
+    fontSize: 12,
+  },
+  messageRole: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  roleIcon: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  roleText: {
+    fontSize: 12,
     fontWeight: '500',
   },
-  typingIndicator: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  typingText: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
+  messageInputContainer: {
     backgroundColor: '#fff',
+    padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#e9ecef',
+    flexDirection: 'row',
     alignItems: 'flex-end',
   },
-  textInput: {
+  messageInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#ddd',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 14,
-    color: '#333',
-    maxHeight: 100,
     marginRight: 12,
+    maxHeight: 100,
+    fontSize: 16,
   },
   sendButton: {
     backgroundColor: '#2F6FED',
@@ -396,12 +735,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   sendButtonDisabled: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#ccc',
   },
   sendButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

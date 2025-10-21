@@ -6,63 +6,85 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
+import ProfileIcon from '../../components/ProfileIcon';
+
+interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  date: string;
+  status: 'present' | 'absent' | 'holiday';
+  reason?: string;
+}
+
+interface MonthlyStats {
+  present: number;
+  absent: number;
+  holiday: number;
+  percentage: number;
+}
 
 const AttendanceScreen = () => {
   const { user } = useAuth();
-  const { attendance } = useData();
+  const { students, attendance } = useData();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [monthAttendance, setMonthAttendance] = useState<any[]>([]);
-  const [summary, setSummary] = useState({
+  const [monthlyAttendance, setMonthlyAttendance] = useState<AttendanceRecord[]>([]);
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStats>({
     present: 0,
     absent: 0,
-    total: 0,
+    holiday: 0,
     percentage: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.childId) {
-      loadMonthAttendance();
-    }
-  }, [user, currentMonth]);
+    loadAttendanceData();
+  }, [currentMonth]);
 
-  const loadMonthAttendance = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    
-    // Get all days in the month
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const monthData = [];
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateString = date.toISOString().split('T')[0];
+  const loadAttendanceData = async () => {
+    try {
+      setLoading(true);
       
-      // Find attendance record for this date
-      const attendanceRecord = attendance.find(att => 
-        att.studentId === user?.childId && att.date === dateString
-      );
-      
-      monthData.push({
-        date: dateString,
-        day,
-        status: attendanceRecord?.status || 'no-record',
-        isWeekend: date.getDay() === 0 || date.getDay() === 6,
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const child = students.find(s => s.id === user?.childId);
+      if (!child) {
+        setLoading(false);
+        return;
+      }
+
+      // Filter attendance for current month
+      const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+
+      const filteredAttendance = attendance.filter(record => {
+        const recordDate = new Date(record.date);
+        return (
+          record.studentId === child.id &&
+          recordDate >= startOfMonth &&
+          recordDate <= endOfMonth
+        );
       });
+
+      setMonthlyAttendance(filteredAttendance);
+
+      // Calculate monthly stats
+      const present = filteredAttendance.filter(r => r.status === 'present').length;
+      const absent = filteredAttendance.filter(r => r.status === 'absent').length;
+      const holiday = filteredAttendance.filter(r => r.status === 'holiday').length;
+      const total = present + absent;
+      const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+
+      setMonthlyStats({ present, absent, holiday, percentage });
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    setMonthAttendance(monthData);
-    
-    // Calculate summary
-    const records = monthData.filter(day => day.status !== 'no-record' && !day.isWeekend);
-    const present = records.filter(day => day.status === 'present').length;
-    const absent = records.filter(day => day.status === 'absent').length;
-    const total = records.length;
-    const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
-    
-    setSummary({ present, absent, total, percentage });
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -75,28 +97,6 @@ const AttendanceScreen = () => {
     setCurrentMonth(newMonth);
   };
 
-  const getStatusColor = (status: string, isWeekend: boolean) => {
-    if (isWeekend) return '#E0E0E0';
-    switch (status) {
-      case 'present': return '#4CAF50';
-      case 'absent': return '#F44336';
-      case 'late': return '#FF9800';
-      case 'holiday': return '#9C27B0';
-      default: return '#F5F5F5';
-    }
-  };
-
-  const getStatusText = (status: string, isWeekend: boolean) => {
-    if (isWeekend) return 'Weekend';
-    switch (status) {
-      case 'present': return 'Present';
-      case 'absent': return 'Absent';
-      case 'late': return 'Late';
-      case 'holiday': return 'Holiday';
-      default: return 'No Record';
-    }
-  };
-
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
       month: 'long', 
@@ -104,107 +104,214 @@ const AttendanceScreen = () => {
     });
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'present':
+        return '#28A745';
+      case 'absent':
+        return '#DC3545';
+      case 'holiday':
+        return '#FFC107';
+      default:
+        return '#6C757D';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'present':
+        return '✅';
+      case 'absent':
+        return '❌';
+      case 'holiday':
+        return '🎉';
+      default:
+        return '❓';
+    }
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const generateCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentMonth);
+    const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const attendanceRecord = monthlyAttendance.find(a => a.date === dateStr);
+      days.push({
+        day,
+        date: dateStr,
+        status: attendanceRecord?.status || 'unknown',
+        reason: attendanceRecord?.reason,
+      });
+    }
+    
+    return days;
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2F6FED" />
+        <Text style={styles.loadingText}>Loading attendance...</Text>
+      </View>
+    );
+  }
+
+  const child = students.find(s => s.id === user?.childId);
+  const calendarDays = generateCalendarDays();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Attendance</Text>
-        <Text style={styles.headerSubtitle}>
-          {formatMonthYear(currentMonth)}
-        </Text>
-      </View>
-
-      {/* Summary */}
-      <View style={styles.summaryCard}>
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>{summary.present}</Text>
-            <Text style={styles.summaryLabel}>Present</Text>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>📊 Attendance</Text>
+            <Text style={styles.headerSubtitle}>
+              {child?.name} - {formatMonthYear(currentMonth)}
+            </Text>
           </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>{summary.absent}</Text>
-            <Text style={styles.summaryLabel}>Absent</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>{summary.percentage}%</Text>
-            <Text style={styles.summaryLabel}>Attendance</Text>
-          </View>
+          <ProfileIcon />
         </View>
       </View>
 
-      {/* Month Navigation */}
-      <View style={styles.navigationContainer}>
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={() => navigateMonth('prev')}
-        >
-          <Text style={styles.navButtonText}>← Previous</Text>
-        </TouchableOpacity>
-        <Text style={styles.monthText}>
-          {formatMonthYear(currentMonth)}
-        </Text>
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={() => navigateMonth('next')}
-        >
-          <Text style={styles.navButtonText}>Next →</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Calendar Grid */}
-      <ScrollView style={styles.calendarContainer}>
-        <View style={styles.weekDaysHeader}>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <Text key={day} style={styles.weekDayText}>{day}</Text>
-          ))}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Monthly Stats */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{monthlyStats.present}</Text>
+            <Text style={styles.statLabel}>Present</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{monthlyStats.absent}</Text>
+            <Text style={styles.statLabel}>Absent</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{monthlyStats.percentage}%</Text>
+            <Text style={styles.statLabel}>Attendance</Text>
+          </View>
         </View>
-        
-        <View style={styles.calendarGrid}>
-          {monthAttendance.map((day, index) => (
-            <View key={index} style={styles.dayContainer}>
-              <View style={[
-                styles.dayBox,
-                { backgroundColor: getStatusColor(day.status, day.isWeekend) }
-              ]}>
-                <Text style={[
-                  styles.dayNumber,
-                  { color: day.isWeekend ? '#999' : '#333' }
-                ]}>
-                  {day.day}
-                </Text>
-                <Text style={[
-                  styles.dayStatus,
-                  { color: day.isWeekend ? '#999' : '#333' }
-                ]}>
-                  {getStatusText(day.status, day.isWeekend)}
-                </Text>
+
+        {/* Month Navigation */}
+        <View style={styles.monthNavigation}>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => navigateMonth('prev')}
+          >
+            <Text style={styles.navButtonText}>← Previous</Text>
+          </TouchableOpacity>
+          
+          <Text style={styles.monthTitle}>
+            {formatMonthYear(currentMonth)}
+          </Text>
+          
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => navigateMonth('next')}
+          >
+            <Text style={styles.navButtonText}>Next →</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Calendar Grid */}
+        <View style={styles.calendarContainer}>
+          <View style={styles.calendarHeader}>
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <Text key={day} style={styles.calendarHeaderDay}>{day}</Text>
+            ))}
+          </View>
+          
+          <View style={styles.calendarGrid}>
+            {calendarDays.map((dayData, index) => (
+              <View key={index} style={styles.calendarDay}>
+                {dayData ? (
+                  <View style={styles.dayContainer}>
+                    <Text style={styles.dayNumber}>{dayData.day}</Text>
+                    <View
+                      style={[
+                        styles.statusIndicator,
+                        { backgroundColor: getStatusColor(dayData.status) }
+                      ]}
+                    >
+                      <Text style={styles.statusIcon}>
+                        {getStatusIcon(dayData.status)}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.emptyDay} />
+                )}
               </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Legend */}
+        <View style={styles.legendContainer}>
+          <Text style={styles.legendTitle}>Legend</Text>
+          <View style={styles.legendItems}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendIndicator, { backgroundColor: '#28A745' }]} />
+              <Text style={styles.legendText}>Present</Text>
             </View>
-          ))}
+            <View style={styles.legendItem}>
+              <View style={[styles.legendIndicator, { backgroundColor: '#DC3545' }]} />
+              <Text style={styles.legendText}>Absent</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendIndicator, { backgroundColor: '#FFC107' }]} />
+              <Text style={styles.legendText}>Holiday</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Recent Attendance Records */}
+        <View style={styles.recordsSection}>
+          <Text style={styles.sectionTitle}>Recent Records</Text>
+          {monthlyAttendance
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 5)
+            .map((record) => (
+              <View key={record.id} style={styles.recordItem}>
+                <View style={styles.recordDate}>
+                  <Text style={styles.recordDateText}>
+                    {new Date(record.date).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </View>
+                <View style={styles.recordStatus}>
+                  <Text style={styles.recordStatusIcon}>
+                    {getStatusIcon(record.status)}
+                  </Text>
+                  <Text style={[
+                    styles.recordStatusText,
+                    { color: getStatusColor(record.status) }
+                  ]}>
+                    {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                  </Text>
+                </View>
+                {record.reason && (
+                  <Text style={styles.recordReason}>{record.reason}</Text>
+                )}
+              </View>
+            ))}
         </View>
       </ScrollView>
-
-      {/* Legend */}
-      <View style={styles.legendContainer}>
-        <Text style={styles.legendTitle}>Legend:</Text>
-        <View style={styles.legendItems}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#4CAF50' }]} />
-            <Text style={styles.legendText}>Present</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#F44336' }]} />
-            <Text style={styles.legendText}>Absent</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#FF9800' }]} />
-            <Text style={styles.legendText}>Late</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#9C27B0' }]} />
-            <Text style={styles.legendText}>Holiday</Text>
-          </View>
-        </View>
-      </View>
     </SafeAreaView>
   );
 };
@@ -214,55 +321,79 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
   header: {
     backgroundColor: '#2F6FED',
-    padding: 20,
     paddingTop: 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#E3F2FD',
-    marginTop: 4,
-  },
-  summaryCard: {
-    backgroundColor: '#fff',
-    margin: 16,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  summaryItem: {
-    alignItems: 'center',
-  },
-  summaryNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2F6FED',
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  navigationContainer: {
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 16,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#B3D4FF',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  statCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2F6FED',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  monthNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   navButton: {
     backgroundColor: '#2F6FED',
@@ -273,82 +404,97 @@ const styles = StyleSheet.create({
   navButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  monthText: {
-    fontSize: 16,
+  monthTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: '#333',
   },
   calendarContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  weekDaysHeader: {
+  calendarHeader: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  weekDayText: {
+  calendarHeaderDay: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
     color: '#666',
     paddingVertical: 8,
   },
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
   },
-  dayContainer: {
+  calendarDay: {
     width: '14.28%',
     aspectRatio: 1,
+    padding: 2,
   },
-  dayBox: {
+  dayContainer: {
     flex: 1,
-    borderRadius: 8,
-    padding: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 60,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
   },
   dayNumber: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 2,
   },
-  dayStatus: {
-    fontSize: 10,
-    textAlign: 'center',
+  statusIndicator: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusIcon: {
+    fontSize: 8,
+  },
+  emptyDay: {
+    flex: 1,
   },
   legendContainer: {
     backgroundColor: '#fff',
-    margin: 16,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 2,
+    elevation: 1,
   },
   legendTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 12,
   },
   legendItems: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
+    justifyContent: 'space-around',
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  legendColor: {
+  legendIndicator: {
     width: 12,
     height: 12,
     borderRadius: 6,
@@ -357,6 +503,55 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 12,
     color: '#666',
+  },
+  recordsSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  recordItem: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  recordDate: {
+    flex: 1,
+  },
+  recordDateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  recordStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  recordStatusIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  recordStatusText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  recordReason: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 4,
   },
 });
 

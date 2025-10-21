@@ -198,6 +198,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
+    marginTop: 40,
     marginBottom: 40,
   },
   logo: {

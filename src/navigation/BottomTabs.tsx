@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text } from 'react-native';
 import HomePlaceholder from '../screens/HomePlaceholder';
+import ProfileScreen from '../screens/parent/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -58,7 +59,7 @@ const BottomTabs = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={HomePlaceholder}
+        component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color }) => (

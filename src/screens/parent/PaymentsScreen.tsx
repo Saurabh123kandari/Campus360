@@ -6,260 +6,356 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Modal,
-  TextInput,
+  ActivityIndicator,
   Alert,
-  Linking,
+  TextInput,
+  Modal,
 } from 'react-native';
+import { Linking } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
+import ProfileIcon from '../../components/ProfileIcon';
+
+interface Payment {
+  id: string;
+  parentId: string;
+  amount: number;
+  description: string;
+  dueDate: string;
+  status: 'pending' | 'paid';
+  paidOn?: string;
+  reference?: string;
+}
+
+interface PaymentSummary {
+  total: number;
+  pending: number;
+  paid: number;
+  overdue: number;
+}
 
 const PaymentsScreen = () => {
   const { user } = useAuth();
   const { payments } = useData();
-  const [childPayments, setChildPayments] = useState<any[]>([]);
+  const [userPayments, setUserPayments] = useState<Payment[]>([]);
+  const [summary, setSummary] = useState<PaymentSummary>({
+    total: 0,
+    pending: 0,
+    paid: 0,
+    overdue: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [showMarkPaidModal, setShowMarkPaidModal] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
-  const [paymentReference, setPaymentReference] = useState('');
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [reference, setReference] = useState('');
   const [paidDate, setPaidDate] = useState('');
 
   useEffect(() => {
-    if (user?.childId && payments) {
-      const filtered = payments.filter(payment => payment.studentId === user.childId);
-      setChildPayments(filtered);
-    }
-  }, [user, payments]);
+    loadPayments();
+  }, []);
 
-  const handlePayAtPortal = () => {
-    const portalUrl = 'https://school-portal.demo';
-    Linking.openURL(portalUrl).catch(err => {
-      Alert.alert('Error', 'Could not open school portal');
-    });
-  };
+  const loadPayments = async () => {
+    try {
+      setLoading(true);
+      
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-  const handleMarkAsPaid = (payment: any) => {
-    setSelectedPayment(payment);
-    setShowMarkPaidModal(true);
-  };
+      // Filter payments for current user
+      const filteredPayments = payments.filter(p => p.parentId === user?.id);
+      setUserPayments(filteredPayments);
 
-  const submitMarkAsPaid = () => {
-    if (!paymentReference.trim()) {
-      Alert.alert('Error', 'Please enter a payment reference');
-      return;
-    }
+      // Calculate summary
+      const total = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
+      const pending = filteredPayments.filter(p => p.status === 'pending').length;
+      const paid = filteredPayments.filter(p => p.status === 'paid').length;
+      const overdue = filteredPayments.filter(p => 
+        p.status === 'pending' && new Date(p.dueDate) < new Date()
+      ).length;
 
-    // In a real app, this would update the backend
-    // For demo, we'll just show a success message
-    Alert.alert(
-      'Success',
-      `Payment marked as paid with reference: ${paymentReference}`,
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            setShowMarkPaidModal(false);
-            setPaymentReference('');
-            setPaidDate('');
-            setSelectedPayment(null);
-          }
-        }
-      ]
-    );
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid': return '#4CAF50';
-      case 'pending': return '#FF9800';
-      case 'overdue': return '#F44336';
-      default: return '#666';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'paid': return 'Paid';
-      case 'pending': return 'Due';
-      case 'overdue': return 'Overdue';
-      default: return 'Unknown';
+      setSummary({ total, pending, paid, overdue });
+    } catch (error) {
+      console.error('Error loading payments:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
     });
   };
 
-  const formatAmount = (amount: number) => {
-    return `₹${amount.toLocaleString()}`;
+  const formatCurrency = (amount: number) => {
+    return `$${amount.toFixed(2)}`;
   };
 
-  const getTotalDue = () => {
-    return childPayments
-      .filter(p => p.status === 'pending' || p.status === 'overdue')
-      .reduce((sum, p) => sum + p.amount, 0);
+  const getStatusColor = (status: string, dueDate: string) => {
+    if (status === 'paid') return '#28A745';
+    if (status === 'pending' && new Date(dueDate) < new Date()) return '#DC3545';
+    if (status === 'pending') return '#FFC107';
+    return '#6C757D';
   };
 
-  const getOverdueCount = () => {
-    return childPayments.filter(p => p.status === 'overdue').length;
+  const getStatusText = (status: string, dueDate: string) => {
+    if (status === 'paid') return 'Paid';
+    if (status === 'pending' && new Date(dueDate) < new Date()) return 'Overdue';
+    if (status === 'pending') return 'Due';
+    return 'Unknown';
   };
+
+  const handlePayAtSchoolPortal = () => {
+    const url = 'https://school-portal.demo';
+    Linking.openURL(url).catch(err => {
+      Alert.alert('Error', 'Could not open school portal');
+    });
+  };
+
+  const handleMarkAsPaid = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setReference('');
+    setPaidDate(new Date().toISOString().split('T')[0]);
+    setShowMarkPaidModal(true);
+  };
+
+  const confirmMarkAsPaid = () => {
+    if (!selectedPayment || !reference.trim()) {
+      Alert.alert('Error', 'Please enter a reference number');
+      return;
+    }
+
+    // Update payment in memory
+    const updatedPayments = userPayments.map(p => 
+      p.id === selectedPayment.id 
+        ? { 
+            ...p, 
+            status: 'paid' as const, 
+            paidOn: paidDate, 
+            reference: reference.trim() 
+          }
+        : p
+    );
+    
+    setUserPayments(updatedPayments);
+    setShowMarkPaidModal(false);
+    setSelectedPayment(null);
+    setReference('');
+    setPaidDate('');
+
+    // Recalculate summary
+    const total = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
+    const pending = updatedPayments.filter(p => p.status === 'pending').length;
+    const paid = updatedPayments.filter(p => p.status === 'paid').length;
+    const overdue = updatedPayments.filter(p => 
+      p.status === 'pending' && new Date(p.dueDate) < new Date()
+    ).length;
+
+    setSummary({ total, pending, paid, overdue });
+
+    Alert.alert('Success', 'Payment marked as paid successfully!');
+  };
+
+  const cancelMarkAsPaid = () => {
+    setShowMarkPaidModal(false);
+    setSelectedPayment(null);
+    setReference('');
+    setPaidDate('');
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2F6FED" />
+        <Text style={styles.loadingText}>Loading payments...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Payments</Text>
-        <Text style={styles.headerSubtitle}>Manage your payments</Text>
-      </View>
-
-      {/* Summary Cards */}
-      <View style={styles.summaryContainer}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Total Due</Text>
-          <Text style={styles.summaryAmount}>{formatAmount(getTotalDue())}</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Overdue</Text>
-          <Text style={styles.summaryCount}>{getOverdueCount()}</Text>
-        </View>
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickActionsContainer}>
-        <TouchableOpacity style={styles.primaryButton} onPress={handlePayAtPortal}>
-          <Text style={styles.primaryButtonText}>Pay at School Portal</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Payments List */}
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {childPayments.length > 0 ? (
-          childPayments.map((payment) => (
-            <View key={payment.id} style={styles.paymentCard}>
-              <View style={styles.paymentHeader}>
-                <Text style={styles.paymentDescription}>{payment.description}</Text>
-                <View style={[
-                  styles.statusBadge,
-                  { backgroundColor: getStatusColor(payment.status) }
-                ]}>
-                  <Text style={styles.statusText}>
-                    {getStatusText(payment.status)}
-                  </Text>
-                </View>
-              </View>
-              
-              <View style={styles.paymentDetails}>
-                <View style={styles.paymentDetailRow}>
-                  <Text style={styles.paymentDetailLabel}>Amount:</Text>
-                  <Text style={styles.paymentAmount}>{formatAmount(payment.amount)}</Text>
-                </View>
-                <View style={styles.paymentDetailRow}>
-                  <Text style={styles.paymentDetailLabel}>Due Date:</Text>
-                  <Text style={styles.paymentDetailValue}>{formatDate(payment.dueDate)}</Text>
-                </View>
-                {payment.status === 'paid' && payment.paidOn && (
-                  <View style={styles.paymentDetailRow}>
-                    <Text style={styles.paymentDetailLabel}>Paid On:</Text>
-                    <Text style={styles.paymentDetailValue}>{formatDate(payment.paidOn)}</Text>
-                  </View>
-                )}
-                {payment.status === 'paid' && payment.reference && (
-                  <View style={styles.paymentDetailRow}>
-                    <Text style={styles.paymentDetailLabel}>Reference:</Text>
-                    <Text style={styles.paymentDetailValue}>{payment.reference}</Text>
-                  </View>
-                )}
-              </View>
-              
-              {payment.status !== 'paid' && (
-                <TouchableOpacity
-                  style={styles.markPaidButton}
-                  onPress={() => handleMarkAsPaid(payment)}
-                >
-                  <Text style={styles.markPaidButtonText}>Mark as Paid (I paid)</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>💰</Text>
-            <Text style={styles.emptyStateTitle}>No Payments</Text>
-            <Text style={styles.emptyStateDescription}>
-              No payment records found for this student.
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>💳 Payments</Text>
+            <Text style={styles.headerSubtitle}>
+              Manage your school payments
             </Text>
           </View>
-        )}
+          <ProfileIcon />
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Summary Cards */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{formatCurrency(summary.total)}</Text>
+            <Text style={styles.summaryLabel}>Total Amount</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{summary.pending}</Text>
+            <Text style={styles.summaryLabel}>Pending</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{summary.paid}</Text>
+            <Text style={styles.summaryLabel}>Paid</Text>
+          </View>
+        </View>
+
+        {/* Primary Action */}
+        <TouchableOpacity
+          style={styles.primaryActionButton}
+          onPress={handlePayAtSchoolPortal}
+        >
+          <Text style={styles.primaryActionIcon}>🏫</Text>
+          <Text style={styles.primaryActionText}>Pay at School Portal</Text>
+        </TouchableOpacity>
+
+        {/* Payments List */}
+        <View style={styles.paymentsSection}>
+          <Text style={styles.sectionTitle}>Payment History</Text>
+          
+          {userPayments.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>💳</Text>
+              <Text style={styles.emptyTitle}>No Payments</Text>
+              <Text style={styles.emptySubtitle}>
+                No payment records found.
+              </Text>
+            </View>
+          ) : (
+            userPayments
+              .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())
+              .map((payment) => (
+                <View key={payment.id} style={styles.paymentCard}>
+                  <View style={styles.paymentHeader}>
+                    <Text style={styles.paymentAmount}>
+                      {formatCurrency(payment.amount)}
+                    </Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        { backgroundColor: getStatusColor(payment.status, payment.dueDate) }
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {getStatusText(payment.status, payment.dueDate)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.paymentDescription}>
+                    {payment.description}
+                  </Text>
+
+                  <View style={styles.paymentDetails}>
+                    <View style={styles.paymentDetail}>
+                      <Text style={styles.paymentDetailIcon}>📅</Text>
+                      <Text style={styles.paymentDetailText}>
+                        Due: {formatDate(payment.dueDate)}
+                      </Text>
+                    </View>
+                    
+                    {payment.status === 'paid' && payment.paidOn && (
+                      <View style={styles.paymentDetail}>
+                        <Text style={styles.paymentDetailIcon}>✅</Text>
+                        <Text style={styles.paymentDetailText}>
+                          Paid: {formatDate(payment.paidOn)}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {payment.status === 'paid' && payment.reference && (
+                      <View style={styles.paymentDetail}>
+                        <Text style={styles.paymentDetailIcon}>🔢</Text>
+                        <Text style={styles.paymentDetailText}>
+                          Ref: {payment.reference}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {payment.status === 'pending' && (
+                    <TouchableOpacity
+                      style={styles.markPaidButton}
+                      onPress={() => handleMarkAsPaid(payment)}
+                    >
+                      <Text style={styles.markPaidButtonText}>
+                        Mark as Paid (I paid)
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))
+          )}
+        </View>
+
+        {/* Help Section */}
+        <View style={styles.helpSection}>
+          <Text style={styles.helpTitle}>💡 Payment Information</Text>
+          <Text style={styles.helpText}>
+            • Payments are processed through the school portal
+          </Text>
+          <Text style={styles.helpText}>
+            • You can mark payments as paid if you've paid directly
+          </Text>
+          <Text style={styles.helpText}>
+            • Contact the school office for payment assistance
+          </Text>
+        </View>
       </ScrollView>
 
       {/* Mark as Paid Modal */}
       <Modal
         visible={showMarkPaidModal}
+        transparent
         animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowMarkPaidModal(false)}
+        onRequestClose={cancelMarkAsPaid}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Mark as Paid</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowMarkPaidModal(false)}
-              >
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
+            <Text style={styles.modalTitle}>Mark as Paid</Text>
+            <Text style={styles.modalSubtitle}>
+              Enter payment details for {selectedPayment?.description}
+            </Text>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Reference Number *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={reference}
+                onChangeText={setReference}
+                placeholder="Enter payment reference"
+                autoCapitalize="characters"
+              />
             </View>
-            
-            <View style={styles.modalBody}>
-              {selectedPayment && (
-                <View style={styles.paymentInfo}>
-                  <Text style={styles.paymentInfoTitle}>{selectedPayment.description}</Text>
-                  <Text style={styles.paymentInfoAmount}>
-                    {formatAmount(selectedPayment.amount)}
-                  </Text>
-                </View>
-              )}
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Payment Reference *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={paymentReference}
-                  onChangeText={setPaymentReference}
-                  placeholder="Enter transaction ID or reference"
-                  placeholderTextColor="#999"
-                />
-              </View>
-              
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Paid Date</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={paidDate}
-                  onChangeText={setPaidDate}
-                  placeholder="YYYY-MM-DD (optional)"
-                  placeholderTextColor="#999"
-                />
-              </View>
-              
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setShowMarkPaidModal(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={submitMarkAsPaid}
-                >
-                  <Text style={styles.submitButtonText}>Mark as Paid</Text>
-                </TouchableOpacity>
-              </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Payment Date *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={paidDate}
+                onChangeText={setPaidDate}
+                placeholder="YYYY-MM-DD"
+              />
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={cancelMarkAsPaid}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={confirmMarkAsPaid}
+              >
+                <Text style={styles.confirmButtonText}>Confirm</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -273,71 +369,127 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
   header: {
     backgroundColor: '#2F6FED',
-    padding: 20,
     paddingTop: 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#E3F2FD',
-    marginTop: 4,
+    color: '#B3D4FF',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
   },
   summaryContainer: {
     flexDirection: 'row',
-    padding: 16,
-    gap: 12,
+    justifyContent: 'space-between',
+    marginBottom: 24,
   },
   summaryCard: {
-    flex: 1,
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  summaryTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  summaryAmount: {
-    fontSize: 20,
+  summaryNumber: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#2F6FED',
+    marginBottom: 4,
   },
-  summaryCount: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#F44336',
+  summaryLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
   },
-  quickActionsContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  primaryButton: {
+  primaryActionButton: {
     backgroundColor: '#2F6FED',
-    paddingVertical: 16,
-    borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  primaryButtonText: {
+  primaryActionIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  primaryActionText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: 16,
+  paymentsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
   paymentCard: {
     backgroundColor: '#fff',
@@ -347,85 +499,81 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 2,
   },
   paymentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  paymentAmount: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   paymentDescription: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#333',
-    flex: 1,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    color: '#fff',
-    fontWeight: '500',
+    marginBottom: 12,
   },
   paymentDetails: {
-    gap: 8,
+    marginBottom: 12,
   },
-  paymentDetailRow: {
+  paymentDetail: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
-  paymentDetailLabel: {
+  paymentDetailIcon: {
+    fontSize: 14,
+    marginRight: 8,
+    width: 16,
+  },
+  paymentDetailText: {
     fontSize: 14,
     color: '#666',
   },
-  paymentAmount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  paymentDetailValue: {
-    fontSize: 14,
-    color: '#333',
-  },
   markPaidButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
+    backgroundColor: '#28A745',
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
     alignSelf: 'flex-start',
-    marginTop: 12,
   },
   markPaidButtonText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
+  helpSection: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
   },
-  emptyStateIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  emptyStateTitle: {
-    fontSize: 18,
+  helpTitle: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  emptyStateDescription: {
+  helpText: {
     fontSize: 14,
     color: '#666',
-    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 20,
   },
   modalOverlay: {
     flex: 1,
@@ -436,48 +584,23 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: 16,
+    padding: 24,
     margin: 20,
     width: '90%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    maxWidth: 400,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  closeButton: {
-    padding: 8,
-  },
-  closeButtonText: {
-    fontSize: 18,
+  modalSubtitle: {
+    fontSize: 14,
     color: '#666',
-  },
-  modalBody: {
-    padding: 20,
-  },
-  paymentInfo: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 20,
-  },
-  paymentInfoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  paymentInfoAmount: {
-    fontSize: 18,
-    color: '#2F6FED',
-    fontWeight: '600',
+    marginBottom: 24,
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 16,
@@ -490,22 +613,25 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#333',
+    backgroundColor: '#f8f9fa',
   },
-  modalActions: {
+  modalButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
+    justifyContent: 'space-between',
+    marginTop: 24,
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginRight: 8,
     alignItems: 'center',
   },
   cancelButtonText: {
@@ -513,17 +639,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  submitButton: {
+  confirmButton: {
     flex: 1,
-    backgroundColor: '#4CAF50',
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    backgroundColor: '#2F6FED',
+    marginLeft: 8,
     alignItems: 'center',
   },
-  submitButtonText: {
+  confirmButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });
 

@@ -1,26 +1,51 @@
 [
   {
     "id": "payment-1",
+    "parentId": "user-1",
     "studentId": "student-1",
-    "amount": 2500,
-    "dueDate": "2024-02-01",
+    "amount": 500,
+    "dueDate": "2024-02-15",
     "status": "pending",
-    "description": "Monthly Tuition Fee"
+    "description": "Monthly school fees - February 2024"
   },
   {
     "id": "payment-2",
+    "parentId": "user-1",
     "studentId": "student-1",
-    "amount": 500,
-    "dueDate": "2024-01-15",
+    "amount": 150,
+    "dueDate": "2024-02-20",
     "status": "paid",
-    "description": "Transportation Fee"
+    "paidOn": "2024-01-15",
+    "reference": "TXN123456",
+    "description": "Transportation fees - February 2024"
   },
   {
     "id": "payment-3",
-    "studentId": "student-2",
-    "amount": 2500,
-    "dueDate": "2024-02-01",
-    "status": "overdue",
-    "description": "Monthly Tuition Fee"
+    "parentId": "user-1",
+    "studentId": "student-1",
+    "amount": 75,
+    "dueDate": "2024-02-28",
+    "status": "pending",
+    "description": "Library fees"
+  },
+  {
+    "id": "payment-4",
+    "parentId": "user-2",
+    "studentId": "student-3",
+    "amount": 300,
+    "dueDate": "2024-02-15",
+    "status": "paid",
+    "paidOn": "2024-01-20",
+    "reference": "TXN789012",
+    "description": "Monthly school fees - February 2024"
+  },
+  {
+    "id": "payment-5",
+    "parentId": "user-3",
+    "studentId": "student-4",
+    "amount": 200,
+    "dueDate": "2024-03-01",
+    "status": "pending",
+    "description": "Sports equipment fees"
   }
 ]

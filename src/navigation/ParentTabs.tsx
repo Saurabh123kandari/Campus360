@@ -1,11 +1,27 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text } from 'react-native';
-import HomePlaceholder from '../screens/HomePlaceholder';
+import HomeDashboard from '../screens/parent/HomeDashboard';
+import AttendanceScreen from '../screens/parent/AttendanceScreen';
+import CalendarScreen from '../screens/parent/CalendarScreen';
+import PaymentsScreen from '../screens/parent/PaymentsScreen';
+import ChatScreen from '../screens/parent/ChatScreen';
+import ProfileScreen from '../screens/parent/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 const ParentTabs = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+    </Stack.Navigator>
+  );
+};
+
+const MainTabs = () => {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -28,7 +44,7 @@ const ParentTabs = () => {
     >
       <Tab.Screen
         name="Home"
-        component={HomePlaceholder}
+        component={HomeDashboard}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color }) => (
@@ -37,18 +53,28 @@ const ParentTabs = () => {
         }}
       />
       <Tab.Screen
-        name="Child"
-        component={HomePlaceholder}
+        name="Attendance"
+        component={AttendanceScreen}
         options={{
-          tabBarLabel: 'My Child',
+          tabBarLabel: 'Attendance',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>👶</Text>
+            <Text style={{ fontSize: 20, color }}>📊</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Calendar"
+        component={CalendarScreen}
+        options={{
+          tabBarLabel: 'Calendar',
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>📅</Text>
           ),
         }}
       />
       <Tab.Screen
         name="Payments"
-        component={HomePlaceholder}
+        component={PaymentsScreen}
         options={{
           tabBarLabel: 'Payments',
           tabBarIcon: ({ color }) => (
@@ -57,12 +83,12 @@ const ParentTabs = () => {
         }}
       />
       <Tab.Screen
-        name="Profile"
-        component={HomePlaceholder}
+        name="Chat"
+        component={ChatScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Chat',
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color }}>👤</Text>
+            <Text style={{ fontSize: 20, color }}>💬</Text>
           ),
         }}
       />

@@ -4,13 +4,39 @@
     "name": "Alex Johnson",
     "classId": "class-1",
     "parentId": "user-1",
-    "grade": "Grade 5"
+    "grade": "Grade 5",
+    "class": "5A",
+    "teacher": "Ms. Johnson",
+    "avatar": "👦"
   },
   {
     "id": "student-2",
     "name": "Maya Patel",
     "classId": "class-1",
     "parentId": "user-4",
-    "grade": "Grade 5"
+    "grade": "Grade 5",
+    "class": "5A",
+    "teacher": "Ms. Johnson",
+    "avatar": "👧"
+  },
+  {
+    "id": "student-3",
+    "name": "Sarah Chen",
+    "classId": "class-2",
+    "parentId": "user-2",
+    "grade": "Grade 3",
+    "class": "3B",
+    "teacher": "Mr. Smith",
+    "avatar": "👧"
+  },
+  {
+    "id": "student-4",
+    "name": "Michael Rodriguez",
+    "classId": "class-3",
+    "parentId": "user-3",
+    "grade": "Grade 4",
+    "class": "4A",
+    "teacher": "Mrs. Davis",
+    "avatar": "👦"
   }
 ]
