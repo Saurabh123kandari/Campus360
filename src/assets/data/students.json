@@ -1,0 +1,16 @@
+[
+  {
+    "id": "student-1",
+    "name": "Alex Johnson",
+    "classId": "class-1",
+    "parentId": "user-1",
+    "grade": "Grade 5"
+  },
+  {
+    "id": "student-2",
+    "name": "Maya Patel",
+    "classId": "class-1",
+    "parentId": "user-4",
+    "grade": "Grade 5"
+  }
+]

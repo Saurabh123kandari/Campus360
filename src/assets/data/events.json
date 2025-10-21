@@ -1,0 +1,29 @@
+[
+  {
+    "id": "event-1",
+    "title": "Parent-Teacher Meeting",
+    "description": "Monthly parent-teacher conference",
+    "date": "2024-02-15",
+    "time": "10:00 AM",
+    "location": "School Auditorium",
+    "type": "meeting"
+  },
+  {
+    "id": "event-2",
+    "title": "Science Fair",
+    "description": "Annual science exhibition by students",
+    "date": "2024-02-20",
+    "time": "09:00 AM",
+    "location": "School Grounds",
+    "type": "academic"
+  },
+  {
+    "id": "event-3",
+    "title": "Sports Day",
+    "description": "Annual sports competition",
+    "date": "2024-03-01",
+    "time": "08:00 AM",
+    "location": "School Playground",
+    "type": "sports"
+  }
+]

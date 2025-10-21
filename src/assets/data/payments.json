@@ -1,0 +1,26 @@
+[
+  {
+    "id": "payment-1",
+    "studentId": "student-1",
+    "amount": 2500,
+    "dueDate": "2024-02-01",
+    "status": "pending",
+    "description": "Monthly Tuition Fee"
+  },
+  {
+    "id": "payment-2",
+    "studentId": "student-1",
+    "amount": 500,
+    "dueDate": "2024-01-15",
+    "status": "paid",
+    "description": "Transportation Fee"
+  },
+  {
+    "id": "payment-3",
+    "studentId": "student-2",
+    "amount": 2500,
+    "dueDate": "2024-02-01",
+    "status": "overdue",
+    "description": "Monthly Tuition Fee"
+  }
+]

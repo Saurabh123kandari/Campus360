@@ -1,0 +1,27 @@
+[
+  {
+    "id": "user-1",
+    "fullName": "Sarah Johnson",
+    "email": "parent@padmai.demo",
+    "password": "Demo@123",
+    "role": "parent",
+    "childId": "student-1",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "user-2",
+    "fullName": "Michael Chen",
+    "email": "teacher@padmai.demo",
+    "password": "Demo@123",
+    "role": "teacher",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "user-3",
+    "fullName": "Dr. Emily Rodriguez",
+    "email": "owner@padmai.demo",
+    "password": "Demo@123",
+    "role": "schoolOwner",
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+]

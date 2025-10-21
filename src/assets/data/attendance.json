@@ -1,0 +1,20 @@
+[
+  {
+    "id": "att-1",
+    "studentId": "student-1",
+    "date": "2024-01-15",
+    "status": "present"
+  },
+  {
+    "id": "att-2",
+    "studentId": "student-1",
+    "date": "2024-01-16",
+    "status": "present"
+  },
+  {
+    "id": "att-3",
+    "studentId": "student-2",
+    "date": "2024-01-15",
+    "status": "late"
+  }
+]
