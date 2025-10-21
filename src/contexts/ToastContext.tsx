@@ -1,17 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Animated, Dimensions } from 'react-native';
 
-export interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  duration?: number;
-}
-
-interface ToastContextType {
-  showToast: (message: string, type?: Toast['type'], duration?: number) => void;
-  hideToast: (id: string) => void;
-  toasts: Toast[];
+export interface ToastContextType {
+  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
+  hideToast: () => void;
+  toast: {
+    message: string;
+    type: 'success' | 'error' | 'info';
+    visible: boolean;
+  };
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -29,33 +25,33 @@ interface ToastProviderProps {
 }
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    visible: boolean;
+  }>({
+    message: '',
+    type: 'info',
+    visible: false,
+  });
 
-  const showToast = (message: string, type: Toast['type'] = 'info', duration: number = 3000) => {
-    const id = Date.now().toString();
-    const newToast: Toast = {
-      id,
-      message,
-      type,
-      duration,
-    };
-
-    setToasts(prev => [...prev, newToast]);
-
-    // Auto-hide toast after duration
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToast({ message, type, visible: true });
+    
+    // Auto hide after 3 seconds
     setTimeout(() => {
-      hideToast(id);
-    }, duration);
+      setToast(prev => ({ ...prev, visible: false }));
+    }, 3000);
   };
 
-  const hideToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, visible: false }));
   };
 
   const value: ToastContextType = {
     showToast,
     hideToast,
-    toasts,
+    toast,
   };
 
   return (
