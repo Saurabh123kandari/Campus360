@@ -84,7 +84,7 @@ const ChatStack = () => (
         headerShown: false,
       }}
     />
-    <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ title: 'Conversation' }} />
+    <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ headerShown: false }} />
     <Stack.Screen
       name="ProfileModal"
       component={ProfileModal}

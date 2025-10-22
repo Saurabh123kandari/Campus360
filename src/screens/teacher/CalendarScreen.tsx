@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
-import ProfileIcon from '../../components/ProfileIcon';
+import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
 import MonthGrid from '../../components/calendar/MonthGrid';
 import EventListItem from '../../components/EventListItem';
 
@@ -125,7 +125,7 @@ const CalendarScreen = () => {
             </View>
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0] || 'Teacher'}!</Text>
-              <ProfileIcon />
+              <TeacherHeaderRight />
             </View>
           </View>
         </View>
