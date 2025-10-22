@@ -16,14 +16,14 @@ interface AttendanceRecord {
   id: string;
   studentId: string;
   date: string;
-  status: 'present' | 'absent' | 'holiday';
+  status: 'present' | 'absent' | 'late';
   reason?: string;
 }
 
 interface MonthlyStats {
   present: number;
   absent: number;
-  holiday: number;
+  late: number;
   percentage: number;
 }
 
@@ -35,7 +35,7 @@ const AttendanceScreen = () => {
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats>({
     present: 0,
     absent: 0,
-    holiday: 0,
+    late: 0,
     percentage: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ const AttendanceScreen = () => {
       setLoading(true);
       
       // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise<void>(resolve => setTimeout(resolve, 500));
 
       const child = students.find(s => s.id === user?.childId);
       if (!child) {
@@ -75,11 +75,11 @@ const AttendanceScreen = () => {
       // Calculate monthly stats
       const present = filteredAttendance.filter(r => r.status === 'present').length;
       const absent = filteredAttendance.filter(r => r.status === 'absent').length;
-      const holiday = filteredAttendance.filter(r => r.status === 'holiday').length;
-      const total = present + absent;
+      const late = filteredAttendance.filter(r => r.status === 'late').length;
+      const total = present + absent + late;
       const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
 
-      setMonthlyStats({ present, absent, holiday, percentage });
+      setMonthlyStats({ present, absent, late, percentage });
     } catch (error) {
       console.error('Error loading attendance data:', error);
     } finally {
@@ -110,7 +110,7 @@ const AttendanceScreen = () => {
         return '#28A745';
       case 'absent':
         return '#DC3545';
-      case 'holiday':
+      case 'late':
         return '#FFC107';
       default:
         return '#6C757D';
@@ -123,8 +123,8 @@ const AttendanceScreen = () => {
         return '✅';
       case 'absent':
         return '❌';
-      case 'holiday':
-        return '🎉';
+      case 'late':
+        return '⏰';
       default:
         return '❓';
     }

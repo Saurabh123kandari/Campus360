@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text } from 'react-native';
 import HomeDashboard from '../screens/parent/HomeDashboard';
 import AttendanceScreen from '../screens/parent/AttendanceScreen';
-import CalendarScreen from '../screens/parent/CalendarScreen';
+import CalendarScreen from '../screens/common/CalendarScreen';
 import PaymentsScreen from '../screens/parent/PaymentsScreen';
 import ChatScreen from '../screens/parent/ChatScreen';
 import ProfileScreen from '../screens/parent/ProfileScreen';

@@ -8,11 +8,22 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "lint": "eslint .",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "start": "react-native start",
+    "start:reset": "react-native start --reset-cache",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "type-check": "tsc --noEmit",
+    "build:android": "cd android && ./gradlew assembleRelease",
+    "build:ios": "cd ios && xcodebuild -workspace Padmai.xcworkspace -scheme Padmai -configuration Release",
+    "clean": "rm -rf node_modules && rm -rf android/build && rm -rf ios/build",
+    "clean:android": "cd android && ./gradlew clean",
+    "clean:ios": "cd ios && xcodebuild clean",
     "dev:server": "cd server && yarn dev",
-    "setup": "yarn install && cd server && yarn install"
+    "setup": "yarn install && cd server && yarn install",
+    "postinstall": "cd ios && pod install"
   },
   "dependencies": {
     "@react-native-picker/picker": "^2.6.1",

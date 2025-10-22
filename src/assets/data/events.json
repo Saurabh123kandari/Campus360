@@ -1,29 +1,102 @@
 [
   {
-    "id": "event-1",
-    "title": "Parent-Teacher Meeting",
-    "description": "Monthly parent-teacher conference",
-    "date": "2024-02-15",
-    "time": "10:00 AM",
-    "location": "School Auditorium",
-    "type": "meeting"
+    "id": "e_1",
+    "title": "Math Test - Chapter 3",
+    "studentId": "student-1",
+    "classId": "class-1",
+    "date": "2024-02-15T10:30:00.000Z",
+    "type": "event",
+    "createdBy": "user-5",
+    "notes": "Algebra fundamentals test covering quadratic equations"
   },
   {
-    "id": "event-2",
-    "title": "Science Fair",
-    "description": "Annual science exhibition by students",
-    "date": "2024-02-20",
-    "time": "09:00 AM",
-    "location": "School Grounds",
-    "type": "academic"
+    "id": "e_2",
+    "title": "Science Fair Project Due",
+    "studentId": "student-1",
+    "classId": "class-1",
+    "date": "2024-02-20T14:00:00.000Z",
+    "type": "task",
+    "createdBy": "user-5",
+    "notes": "Submit final project report and presentation materials"
   },
   {
-    "id": "event-3",
+    "id": "e_3",
     "title": "Sports Day",
-    "description": "Annual sports competition",
-    "date": "2024-03-01",
-    "time": "08:00 AM",
-    "location": "School Playground",
-    "type": "sports"
+    "studentId": "student-2",
+    "classId": "class-1",
+    "date": "2024-02-25T08:00:00.000Z",
+    "type": "event",
+    "createdBy": "user-6",
+    "notes": "Annual sports competition - all students participate"
+  },
+  {
+    "id": "e_4",
+    "title": "Holiday - Republic Day",
+    "studentId": "student-3",
+    "classId": "class-2",
+    "date": "2024-02-26T00:00:00.000Z",
+    "type": "holiday",
+    "createdBy": "user-7",
+    "notes": "School closed for Republic Day celebration"
+  },
+  {
+    "id": "e_5",
+    "title": "English Essay Assignment",
+    "studentId": "student-1",
+    "classId": "class-1",
+    "date": "2024-02-28T16:00:00.000Z",
+    "type": "task",
+    "createdBy": "user-5",
+    "notes": "Write 500-word essay on 'My Favorite Book'"
+  },
+  {
+    "id": "e_6",
+    "title": "Parent-Teacher Meeting",
+    "studentId": "student-2",
+    "classId": "class-1",
+    "date": "2024-03-01T10:00:00.000Z",
+    "type": "event",
+    "createdBy": "user-5",
+    "notes": "Monthly progress review meeting"
+  },
+  {
+    "id": "e_7",
+    "title": "Art Exhibition",
+    "studentId": "student-3",
+    "classId": "class-2",
+    "date": "2024-03-05T15:30:00.000Z",
+    "type": "event",
+    "createdBy": "user-8",
+    "notes": "Student artwork display in the main hall"
+  },
+  {
+    "id": "e_8",
+    "title": "History Project Submission",
+    "studentId": "student-4",
+    "classId": "class-3",
+    "date": "2024-03-08T12:00:00.000Z",
+    "type": "task",
+    "createdBy": "user-9",
+    "notes": "Submit research project on ancient civilizations"
+  },
+  {
+    "id": "e_9",
+    "title": "Holiday - Holi",
+    "studentId": "student-1",
+    "classId": "class-1",
+    "date": "2024-03-10T00:00:00.000Z",
+    "type": "holiday",
+    "createdBy": "user-7",
+    "notes": "School closed for Holi festival"
+  },
+  {
+    "id": "e_10",
+    "title": "Monthly Assessment",
+    "studentId": "student-2",
+    "classId": "class-1",
+    "date": "2024-03-15T09:00:00.000Z",
+    "type": "event",
+    "createdBy": "user-5",
+    "notes": "Comprehensive monthly assessment for all subjects"
   }
 ]
