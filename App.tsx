@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { DataProvider } from './src/providers/DataProvider';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ToastProvider } from './src/contexts/ToastContext';
+import { ModalProvider } from './src/contexts/ModalContext';
 import Toast from './src/components/Toast';
 import RootNavigation from './src/navigation/RootNavigation';
 
@@ -13,9 +14,11 @@ const App: React.FC = () => {
       <DataProvider>
         <AuthProvider>
           <ToastProvider>
-            <StatusBar barStyle="light-content" backgroundColor="#2F6FED" />
-            <RootNavigation />
-            <Toast />
+            <ModalProvider>
+              <StatusBar barStyle="light-content" backgroundColor="#2F6FED" />
+              <RootNavigation />
+              <Toast />
+            </ModalProvider>
           </ToastProvider>
         </AuthProvider>
       </DataProvider>

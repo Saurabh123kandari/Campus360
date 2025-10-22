@@ -101,6 +101,24 @@ const AttendanceListScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <Text style={styles.logo}>📚 Padmai</Text>
+            <View style={styles.headerRight}>
+              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
+              <TeacherHeaderRight />
+            </View>
+          </View>
+          <View style={styles.teacherInfo}>
+            <Text style={styles.teacherAvatar}>👩‍🏫</Text>
+            <View style={styles.teacherDetails}>
+              <Text style={styles.teacherName}>{user?.fullName}</Text>
+              <Text style={styles.teacherRole}>Teacher</Text>
+            </View>
+          </View>
+        </View>
+
         {/* Class Selector */}
         <View style={styles.classSelector}>
           <Text style={styles.selectorLabel}>Select Class:</Text>
@@ -209,6 +227,56 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  header: {
+    backgroundColor: '#2F6FED',
+    paddingTop: 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logo: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#B3D4FF',
+  },
+  teacherInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  teacherAvatar: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  teacherDetails: {
+    flex: 1,
+  },
+  teacherName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  teacherRole: {
+    fontSize: 14,
+    color: '#B3D4FF',
   },
   loadingContainer: {
     flex: 1,

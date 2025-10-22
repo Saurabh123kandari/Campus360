@@ -44,11 +44,12 @@ export interface Attendance {
 export interface Event {
   id: string;
   title: string;
-  description: string;
+  studentId?: string;
+  classId?: string;
   date: string;
-  time: string;
-  location: string;
-  type: 'academic' | 'sports' | 'cultural' | 'meeting';
+  type: 'event' | 'task' | 'holiday';
+  createdBy: string;
+  notes: string;
 }
 
 export interface Payment {

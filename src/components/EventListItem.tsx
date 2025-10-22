@@ -1,16 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
-
-export interface Event {
-  id: string;
-  title: string;
-  studentId?: string;
-  classId?: string;
-  date: string;
-  type: 'event' | 'task' | 'holiday';
-  createdBy: string;
-  notes: string;
-}
+import { Event } from '../types/auth';
 
 export interface EventListItemProps {
   event: Event;

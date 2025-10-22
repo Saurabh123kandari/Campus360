@@ -8,18 +8,18 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { useModal } from '../contexts/ModalContext';
 
 const HomePlaceholder = () => {
   const { user, logout } = useAuth();
+  const { showConfirm } = useModal();
 
   const handleLogout = () => {
-    Alert.alert(
+    showConfirm(
       'Logout',
       'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: logout },
-      ]
+      logout,
+      () => console.log('Logout cancelled')
     );
   };
 

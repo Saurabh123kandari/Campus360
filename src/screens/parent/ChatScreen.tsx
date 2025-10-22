@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
+import { useModal } from '../../contexts/ModalContext';
 import ProfileIcon from '../../components/ProfileIcon';
 
 interface Message {
@@ -40,6 +41,7 @@ interface ChatThread {
 const ChatScreen = () => {
   const { user } = useAuth();
   const { students, events, chats, chatMessages, users } = useData();
+  const { showAlert, showError, showSuccess } = useModal();
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -245,7 +247,7 @@ const ChatScreen = () => {
       
     } catch (error) {
       console.error('Error sending message:', error);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      showError('Error', 'Failed to send message. Please try again.');
     }
   };
 
@@ -267,14 +269,13 @@ const ChatScreen = () => {
   };
 
   const handleViewTask = (taskId: string) => {
-    Alert.alert('Task Details', `Viewing task: ${taskId}`, [
-      { text: 'View in Calendar', onPress: () => Alert.alert('Navigation', 'Opening Calendar...') },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+    showAlert('Task Details', `Viewing task: ${taskId}`, () => {
+      showSuccess('Navigation', 'Opening Calendar...');
+    });
   };
 
   const handleNewChat = () => {
-    Alert.alert('New Chat', 'Starting a new conversation with school staff...');
+    showAlert('New Chat', 'Starting a new conversation with school staff...');
   };
 
   const renderChatList = () => (

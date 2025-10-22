@@ -10,7 +10,6 @@ import CalendarScreen from '../screens/teacher/CalendarScreen';
 import TeacherChatDirectory from '../screens/teacher/TeacherChatDirectory';
 import ChatThreadScreen from '../screens/chat/ChatThreadScreen';
 import ProfileModal from '../screens/teacher/ProfileModal';
-import TeacherHeaderRight from '../components/teacher/TeacherHeaderRight';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -21,9 +20,7 @@ const DashboardStack = () => (
       name="TeacherDashboard"
       component={DashboardScreen}
       options={{
-        headerShown: true,
-        title: 'Dashboard',
-        headerRight: () => <TeacherHeaderRight />,
+        headerShown: false,
       }}
     />
     <Stack.Screen
@@ -40,9 +37,7 @@ const AttendanceStack = () => (
       name="AttendanceList"
       component={AttendanceListScreen}
       options={{
-        headerShown: true,
-        title: 'Attendance',
-        headerRight: () => <TeacherHeaderRight />,
+        headerShown: false,
       }}
     />
     <Stack.Screen
@@ -69,9 +64,7 @@ const CalendarStack = () => (
       name="TeacherCalendar"
       component={CalendarScreen}
       options={{
-        headerShown: true,
-        title: 'Calendar',
-        headerRight: () => <TeacherHeaderRight />,
+        headerShown: false,
       }}
     />
     <Stack.Screen
@@ -88,9 +81,7 @@ const ChatStack = () => (
       name="TeacherChatDirectory"
       component={TeacherChatDirectory}
       options={{
-        headerShown: true,
-        title: 'Chat',
-        headerRight: () => <TeacherHeaderRight />,
+        headerShown: false,
       }}
     />
     <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ title: 'Conversation' }} />

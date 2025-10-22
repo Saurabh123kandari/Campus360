@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
-import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
+import ProfileIcon from '../../components/ProfileIcon';
 import MonthGrid from '../../components/calendar/MonthGrid';
 import EventListItem from '../../components/EventListItem';
 
@@ -116,8 +116,33 @@ const CalendarScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <View style={styles.appBranding}>
+              <Text style={styles.appIcon}>📚</Text>
+              <Text style={styles.appName}>Padmai</Text>
+            </View>
+            <View style={styles.welcomeSection}>
+              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0] || 'Teacher'}!</Text>
+              <ProfileIcon />
+            </View>
+          </View>
+        </View>
+        
+        <View style={styles.teacherInfoCard}>
+          <View style={styles.teacherAvatar}>
+            <Text style={styles.teacherAvatarText}>👨‍🏫</Text>
+          </View>
+          <View style={styles.teacherDetails}>
+            <Text style={styles.teacherName}>{user?.fullName || 'Teacher Name'}</Text>
+            <Text style={styles.teacherRole}>Mathematics Teacher</Text>
+          </View>
+        </View>
+      </View>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Calendar Header */}
+        {/* Calendar Navigation */}
         <View style={styles.calendarHeader}>
           <View style={styles.monthNavigation}>
             <TouchableOpacity style={styles.navButton} onPress={() => navigateMonth('prev')}>
@@ -257,15 +282,92 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  header: {
+    backgroundColor: '#2F6FED',
+    paddingTop: 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  appBranding: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  appIcon: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  appName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  welcomeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: 16,
+    color: '#fff',
+    marginRight: 8,
+  },
+  teacherInfoCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  teacherAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  teacherAvatarText: {
+    fontSize: 24,
+  },
+  teacherDetails: {
+    flex: 1,
+  },
+  teacherName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  teacherRole: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
   content: {
     flex: 1,
   },
   calendarHeader: {
     backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 16,
   },
   monthNavigation: {
     flexDirection: 'row',
@@ -273,51 +375,69 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   navButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   navButtonText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#2F6FED',
     fontWeight: 'bold',
   },
   monthInfo: {
     alignItems: 'center',
+    flex: 1,
   },
   monthText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#333',
+    marginBottom: 4,
   },
   todayButton: {
-    marginTop: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: '#2F6FED',
-    borderRadius: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   todayButtonText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#fff',
     fontWeight: '600',
   },
   eventsSection: {
-    marginTop: 8,
-    padding: 16,
+    marginHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   eventsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   eventsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#333',
   },
   createButton: {

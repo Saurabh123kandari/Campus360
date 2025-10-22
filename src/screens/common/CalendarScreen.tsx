@@ -15,7 +15,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import ProfileIcon from '../../components/ProfileIcon';
 import MonthGrid from '../../components/calendar/MonthGrid';
-import EventListItem, { Event } from '../../components/EventListItem';
+import EventListItem from '../../components/EventListItem';
+import { Event } from '../../types/auth';
 
 interface EventDetailModalProps {
   visible: boolean;

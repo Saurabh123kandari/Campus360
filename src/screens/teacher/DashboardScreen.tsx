@@ -92,10 +92,22 @@ const DashboardScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header Section */}
-        <View style={styles.headerSection}>
-          <Text style={styles.welcomeText}>Welcome back, {user?.fullName}!</Text>
-          <Text style={styles.subjectText}>Mathematics Teacher</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <Text style={styles.logo}>📚 Padmai</Text>
+            <View style={styles.headerRight}>
+              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
+              <TeacherHeaderRight />
+            </View>
+          </View>
+          <View style={styles.teacherInfo}>
+            <Text style={styles.teacherAvatar}>👩‍🏫</Text>
+            <View style={styles.teacherDetails}>
+              <Text style={styles.teacherName}>{user?.fullName}</Text>
+              <Text style={styles.teacherRole}>Mathematics Teacher</Text>
+            </View>
+          </View>
           
           <View style={styles.classSelector}>
             <Text style={styles.selectorLabel}>Current Class:</Text>
@@ -233,21 +245,55 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  headerSection: {
+  header: {
     backgroundColor: '#2F6FED',
-    padding: 20,
     paddingTop: 40,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
-  welcomeText: {
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logo: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
   },
-  subjectText: {
-    fontSize: 16,
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: '600',
     color: '#B3D4FF',
-    marginBottom: 20,
+  },
+  teacherInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  teacherAvatar: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  teacherDetails: {
+    flex: 1,
+  },
+  teacherName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  teacherRole: {
+    fontSize: 14,
+    color: '#B3D4FF',
   },
   classSelector: {
     flexDirection: 'row',

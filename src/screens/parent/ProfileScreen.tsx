@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import { useNavigation } from '@react-navigation/native';
+import { useModal } from '../../contexts/ModalContext';
 
 const { width } = Dimensions.get('window');
 
@@ -28,45 +29,43 @@ const ProfileScreen = () => {
   const { user, logout } = useAuth();
   const { students } = useData();
   const navigation = useNavigation();
+  const { showConfirm, showAlert } = useModal();
   const [isEditing, setIsEditing] = useState(false);
 
   const child = students.find(s => s.id === user?.childId);
 
   const handleEditProfile = () => {
     setIsEditing(true);
-    Alert.alert('Edit Profile', 'Profile editing functionality will be implemented');
+    showAlert('Edit Profile', 'Profile editing functionality will be implemented');
     setTimeout(() => setIsEditing(false), 1000);
   };
 
   const handleChangePassword = () => {
-    Alert.alert('Change Password', 'Password change functionality will be implemented');
+    showAlert('Change Password', 'Password change functionality will be implemented');
   };
 
   const handleNotificationSettings = () => {
-    Alert.alert('Notifications', 'Notification settings will be implemented');
+    showAlert('Notifications', 'Notification settings will be implemented');
   };
 
   const handlePrivacySettings = () => {
-    Alert.alert('Privacy', 'Privacy settings will be implemented');
+    showAlert('Privacy', 'Privacy settings will be implemented');
   };
 
   const handleHelpSupport = () => {
-    Alert.alert('Help & Support', 'Help and support functionality will be implemented');
+    showAlert('Help & Support', 'Help and support functionality will be implemented');
   };
 
   const handleAbout = () => {
-    Alert.alert('About', 'Padmai School Management System\nVersion 1.0.0\n\nA comprehensive school management solution for parents, teachers, and administrators.');
+    showAlert('About', 'Padmai School Management System\nVersion 1.0.0\n\nA comprehensive school management solution for parents, teachers, and administrators.');
   };
 
   const handleLogout = () => {
-    Alert.alert(
+    showConfirm(
       'Logout',
       'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', onPress: logout, style: 'destructive' },
-      ],
-      { cancelable: true }
+      logout,
+      () => console.log('Logout cancelled')
     );
   };
 
