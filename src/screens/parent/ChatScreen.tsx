@@ -39,7 +39,7 @@ interface ChatThread {
 
 const ChatScreen = () => {
   const { user } = useAuth();
-  const { students, events } = useData();
+  const { students, events, chats, chatMessages, users } = useData();
   const [activeThread, setActiveThread] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -56,7 +56,7 @@ const ChatScreen = () => {
       setLoading(true);
       
       // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise<void>(resolve => setTimeout(resolve, 500));
 
       const child = students.find(s => s.id === user?.childId);
       if (!child) {
@@ -64,43 +64,38 @@ const ChatScreen = () => {
         return;
       }
 
-      // Mock chat threads
-      const mockThreads: ChatThread[] = [
-        {
-          id: 'thread-1',
-          title: `Chat with ${child.name}'s Teacher`,
-          participants: [user?.id || '', 'teacher-1'],
-          lastMessage: {
-            id: 'msg-1',
-            senderId: 'teacher-1',
-            senderName: 'Ms. Johnson',
-            senderRole: 'teacher',
-            content: `${child.name} had a great day today!`,
-            timestamp: '2024-01-20T10:30:00Z',
-            isRead: false,
-            type: 'message',
-          },
-          unreadCount: 2,
-          isActive: false,
-        },
-        {
-          id: 'thread-2',
-          title: 'School Administration',
-          participants: [user?.id || '', 'admin-1'],
-          lastMessage: {
-            id: 'msg-2',
-            senderId: 'admin-1',
-            senderName: 'School Office',
-            senderRole: 'admin',
-            content: 'Important announcement about school events',
-            timestamp: '2024-01-19T16:45:00Z',
-            isRead: true,
-            type: 'announcement',
-          },
-          unreadCount: 0,
-          isActive: false,
-        },
-      ];
+      // Get actual chat threads from data
+      const parentChats = chats.filter(chat => chat.parentId === user?.id);
+      
+      // Enhance with teacher and student info
+      const enhancedThreads = parentChats.map(chat => {
+        const teacher = users.find(u => u.id === chat.teacherId);
+        const student = students.find(s => s.id === chat.studentId);
+        
+        // Get last message for this thread
+        const threadMessages = chatMessages.filter(msg => msg.threadId === chat.threadId);
+        const lastMessage = threadMessages.length > 0 
+          ? threadMessages[threadMessages.length - 1]
+          : null;
+
+        return {
+          id: chat.threadId,
+          title: `${teacher?.fullName || 'Teacher'} - ${student?.name || 'Student'}`,
+          participants: [chat.parentId, chat.teacherId],
+          lastMessage: lastMessage ? {
+            id: lastMessage.id,
+            senderId: lastMessage.senderId,
+            senderName: lastMessage.senderName,
+            senderRole: lastMessage.senderRole,
+            content: lastMessage.content,
+            timestamp: lastMessage.timestamp,
+            isRead: lastMessage.isRead,
+            type: lastMessage.type,
+          } : undefined,
+          unreadCount: chat.unreadCount,
+          isActive: chat.isActive,
+        };
+      });
 
       // Mock messages for active thread
       const mockMessages: Message[] = [
@@ -147,8 +142,7 @@ const ChatScreen = () => {
         },
       ];
 
-      setChatThreads(mockThreads);
-      setMessages(mockMessages);
+      setChatThreads(enhancedThreads);
     } catch (error) {
       console.error('Error loading chat data:', error);
     } finally {
@@ -219,27 +213,40 @@ const ChatScreen = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!message.trim() || !activeThread) return;
+  const handleSendMessage = async () => {
+    if (!message.trim() || !activeThread || !user) return;
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      senderId: user?.id || '',
-      senderName: user?.fullName || '',
-      senderRole: 'parent',
-      content: message.trim(),
-      timestamp: new Date().toISOString(),
-      isRead: false,
-      type: 'message',
-    };
+    try {
+      const newMessage: Message = {
+        id: `msg-${Date.now()}`,
+        senderId: user.id,
+        senderName: user.fullName,
+        senderRole: 'parent',
+        content: message.trim(),
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        type: 'message',
+      };
 
-    setMessages(prev => [...prev, newMessage]);
-    setMessage('');
+      // Add to local state immediately for instant UI update
+      setMessages(prev => [...prev, newMessage]);
+      setMessage('');
 
-    // Auto-scroll to bottom
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+      // TODO: Save to actual data store/API
+      console.debug('Sending message:', newMessage);
+      
+      // Simulate API call
+      await new Promise<void>(resolve => setTimeout(resolve, 500));
+      
+      // Auto-scroll to bottom
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
+    }
   };
 
   const handleThreadSelect = (threadId: string) => {
@@ -250,6 +257,13 @@ const ChatScreen = () => {
         thread.id === threadId ? { ...thread, unreadCount: 0, isActive: true } : { ...thread, isActive: false }
       )
     );
+
+    // Load actual messages for this thread
+    const threadMessages = chatMessages.filter(msg => msg.threadId === threadId);
+    const sortedMessages = threadMessages.sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    setMessages(sortedMessages);
   };
 
   const handleViewTask = (taskId: string) => {

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "course_1",
+    "name": "Mathematics Grade 1",
+    "subject": "Mathematics",
+    "grade": "1",
+    "teacherId": "teacher_1",
+    "classId": "class_1",
+    "modules": [
+      {
+        "id": "module_1",
+        "name": "Basic Addition",
+        "description": "Learning to add numbers 1-10",
+        "status": "in_progress"
+      },
+      {
+        "id": "module_2",
+        "name": "Basic Subtraction",
+        "description": "Learning to subtract numbers 1-10",
+        "status": "upcoming"
+      }
+    ]
+  },
+  {
+    "id": "course_2",
+    "name": "Science Grade 2",
+    "subject": "Science",
+    "grade": "2",
+    "teacherId": "teacher_2",
+    "classId": "class_2",
+    "modules": [
+      {
+        "id": "module_3",
+        "name": "Plants and Animals",
+        "description": "Understanding living things",
+        "status": "completed"
+      },
+      {
+        "id": "module_4",
+        "name": "Weather Patterns",
+        "description": "Learning about different weather conditions",
+        "status": "in_progress"
+      }
+    ]
+  },
+  {
+    "id": "course_3",
+    "name": "English Grade 3",
+    "subject": "English",
+    "grade": "3",
+    "teacherId": "teacher_3",
+    "classId": "class_3",
+    "modules": [
+      {
+        "id": "module_5",
+        "name": "Reading Comprehension",
+        "description": "Understanding and analyzing texts",
+        "status": "in_progress"
+      },
+      {
+        "id": "module_6",
+        "name": "Creative Writing",
+        "description": "Writing stories and essays",
+        "status": "upcoming"
+      }
+    ]
+  }
+]

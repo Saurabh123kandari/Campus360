@@ -1,0 +1,35 @@
+[
+  {
+    "id": "chat_1",
+    "threadId": "thread_1",
+    "studentId": "s_1",
+    "parentId": "u_parent_1",
+    "teacherId": "teacher_1",
+    "lastMessage": "Thank you for the update!",
+    "lastMessageTime": "2024-01-20T14:30:00.000Z",
+    "unreadCount": 2,
+    "isActive": true
+  },
+  {
+    "id": "chat_2",
+    "threadId": "thread_2",
+    "studentId": "s_2",
+    "parentId": "u_parent_2",
+    "teacherId": "teacher_1",
+    "lastMessage": "How is my child doing in math?",
+    "lastMessageTime": "2024-01-20T10:15:00.000Z",
+    "unreadCount": 0,
+    "isActive": false
+  },
+  {
+    "id": "chat_3",
+    "threadId": "thread_3",
+    "studentId": "s_3",
+    "parentId": "u_parent_3",
+    "teacherId": "teacher_2",
+    "lastMessage": "The science project is due next week",
+    "lastMessageTime": "2024-01-19T16:45:00.000Z",
+    "unreadCount": 1,
+    "isActive": true
+  }
+]

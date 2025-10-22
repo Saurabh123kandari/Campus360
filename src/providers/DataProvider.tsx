@@ -7,6 +7,10 @@ import studentsData from '../assets/data/students.json';
 import attendanceData from '../assets/data/attendance.json';
 import eventsData from '../assets/data/events.json';
 import paymentsData from '../assets/data/payments.json';
+import teachersData from '../assets/data/teachers.json';
+import coursesData from '../assets/data/courses.json';
+import chatsData from '../assets/data/chats.json';
+import chatMessagesData from '../assets/data/chatMessages.json';
 
 interface DataContextType {
   users: User[];
@@ -14,6 +18,10 @@ interface DataContextType {
   attendance: Attendance[];
   events: Event[];
   payments: Payment[];
+  teachers: any[];
+  courses: any[];
+  chats: any[];
+  chatMessages: any[];
   addUser: (user: User) => void;
   updateUser: (userId: string, updates: Partial<User>) => void;
   isLoading: boolean;
@@ -39,6 +47,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [chats, setChats] = useState<any[]>([]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -52,6 +64,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         setAttendance(attendanceData as Attendance[]);
         setEvents(eventsData as Event[]);
         setPayments(paymentsData as Payment[]);
+        setTeachers(teachersData as any[]);
+        setCourses(coursesData as any[]);
+        setChats(chatsData as any[]);
+        setChatMessages(chatMessagesData as any[]);
         
         console.debug('📊 Static data loaded successfully');
       } catch (error) {
@@ -84,6 +100,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     attendance,
     events,
     payments,
+    teachers,
+    courses,
+    chats,
+    chatMessages,
     addUser,
     updateUser,
     isLoading,

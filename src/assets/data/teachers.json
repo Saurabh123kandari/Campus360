@@ -1,0 +1,29 @@
+[
+  {
+    "id": "teacher_1",
+    "fullName": "Ms. Sarah Johnson",
+    "email": "sarah.johnson@school.com",
+    "role": "teacher",
+    "subject": "Mathematics",
+    "classes": ["class_1", "class_2"],
+    "createdAt": "2024-01-15T08:00:00.000Z"
+  },
+  {
+    "id": "teacher_2",
+    "fullName": "Mr. David Wilson",
+    "email": "david.wilson@school.com",
+    "role": "teacher",
+    "subject": "Science",
+    "classes": ["class_2", "class_3"],
+    "createdAt": "2024-01-15T08:00:00.000Z"
+  },
+  {
+    "id": "teacher_3",
+    "fullName": "Ms. Emily Brown",
+    "email": "emily.brown@school.com",
+    "role": "teacher",
+    "subject": "English",
+    "classes": ["class_1", "class_3"],
+    "createdAt": "2024-01-15T08:00:00.000Z"
+  }
+]

@@ -1,17 +1,43 @@
 [
   {
-    "id": "user-1",
+    "id": "u_parent_1",
     "fullName": "Sarah Johnson",
     "email": "parent@padmai.demo",
     "password": "Demo@123",
     "role": "parent",
-    "childId": "student-1",
+    "childId": "s_1",
     "createdAt": "2024-01-01T00:00:00Z"
   },
   {
-    "id": "user-2",
-    "fullName": "Michael Chen",
+    "id": "u_parent_2",
+    "fullName": "Michael Smith",
+    "email": "parent2@padmai.demo",
+    "password": "Demo@123",
+    "role": "parent",
+    "childId": "s_2",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "u_parent_3",
+    "fullName": "Emily Brown",
+    "email": "parent3@padmai.demo",
+    "password": "Demo@123",
+    "role": "parent",
+    "childId": "s_3",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "teacher_1",
+    "fullName": "Ms. Sarah Johnson",
     "email": "teacher@padmai.demo",
+    "password": "Demo@123",
+    "role": "teacher",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": "teacher_2",
+    "fullName": "Mr. David Wilson",
+    "email": "teacher2@padmai.demo",
     "password": "Demo@123",
     "role": "teacher",
     "createdAt": "2024-01-01T00:00:00Z"

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "msg_1",
+    "threadId": "thread_1",
+    "senderId": "teacher_1",
+    "senderName": "Ms. Sarah Johnson",
+    "senderRole": "teacher",
+    "content": "Hello! I wanted to update you on Sarah's progress in mathematics. She has been doing very well with her addition and subtraction.",
+    "timestamp": "2024-01-20T09:00:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_2",
+    "threadId": "thread_1",
+    "senderId": "u_parent_1",
+    "senderName": "Mrs. Johnson",
+    "senderRole": "parent",
+    "content": "Thank you for reaching out! How is she doing compared to other students?",
+    "timestamp": "2024-01-20T09:15:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_3",
+    "threadId": "thread_1",
+    "senderId": "teacher_1",
+    "senderName": "Ms. Sarah Johnson",
+    "senderRole": "teacher",
+    "content": "She's performing above average! Her recent test scores have improved significantly. I'm very proud of her progress.",
+    "timestamp": "2024-01-20T09:30:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_4",
+    "threadId": "thread_1",
+    "senderId": "u_parent_1",
+    "senderName": "Mrs. Johnson",
+    "senderRole": "parent",
+    "content": "That's wonderful to hear! Is there anything we can do at home to support her learning?",
+    "timestamp": "2024-01-20T10:00:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_5",
+    "threadId": "thread_1",
+    "senderId": "teacher_1",
+    "senderName": "Ms. Sarah Johnson",
+    "senderRole": "teacher",
+    "content": "I'd recommend practicing basic math facts for 10-15 minutes daily. I'll send some fun worksheets home with her tomorrow.",
+    "timestamp": "2024-01-20T10:15:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_6",
+    "threadId": "thread_1",
+    "senderId": "u_parent_1",
+    "senderName": "Mrs. Johnson",
+    "senderRole": "parent",
+    "content": "Thank you for the update!",
+    "timestamp": "2024-01-20T14:30:00.000Z",
+    "type": "message",
+    "isRead": false
+  },
+  {
+    "id": "msg_7",
+    "threadId": "thread_2",
+    "senderId": "u_parent_2",
+    "senderName": "Mr. Smith",
+    "senderRole": "parent",
+    "content": "How is my child doing in math? I noticed he's been struggling with homework lately.",
+    "timestamp": "2024-01-20T10:15:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_8",
+    "threadId": "thread_2",
+    "senderId": "teacher_1",
+    "senderName": "Ms. Sarah Johnson",
+    "senderRole": "teacher",
+    "content": "I understand your concern. Let's schedule a meeting to discuss his progress and create a support plan.",
+    "timestamp": "2024-01-20T11:00:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_9",
+    "threadId": "thread_3",
+    "senderId": "teacher_2",
+    "senderName": "Mr. David Wilson",
+    "senderRole": "teacher",
+    "content": "The science project is due next week. Please ensure your child brings all required materials.",
+    "timestamp": "2024-01-19T16:45:00.000Z",
+    "type": "message",
+    "isRead": true
+  },
+  {
+    "id": "msg_10",
+    "threadId": "thread_3",
+    "senderId": "u_parent_3",
+    "senderName": "Mrs. Brown",
+    "senderRole": "parent",
+    "content": "What materials are needed for the project?",
+    "timestamp": "2024-01-19T17:00:00.000Z",
+    "type": "message",
+    "isRead": false
+  }
+]
