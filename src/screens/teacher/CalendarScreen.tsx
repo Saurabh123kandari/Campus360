@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
+import ProfileModal from './ProfileModal';
 import MonthGrid from '../../components/calendar/MonthGrid';
 import EventListItem from '../../components/EventListItem';
 
@@ -24,6 +25,7 @@ const CalendarScreen = () => {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   useEffect(() => {
     loadEvents();
@@ -125,7 +127,7 @@ const CalendarScreen = () => {
             </View>
             <View style={styles.welcomeSection}>
               <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0] || 'Teacher'}!</Text>
-              <TeacherHeaderRight />
+              <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
             </View>
           </View>
         </View>
@@ -263,6 +265,11 @@ const CalendarScreen = () => {
           </View>
         </View>
       </Modal>
+      
+      <ProfileModal
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

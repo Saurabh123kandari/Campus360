@@ -21,8 +21,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
   const { students } = useData();
 
   const handleLogout = () => {
-    logout();
-    onClose();
+    try {
+      console.debug('🚪 Teacher logout initiated');
+      onClose(); // Close modal first
+      logout(); // Then logout
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      // Still try to logout even if there's an error
+      logout();
+    }
   };
 
   const handleSwitchClass = () => {
@@ -79,8 +86,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
               <TouchableOpacity style={styles.actionButton} onPress={handleSwitchClass}>
                 <Text style={styles.actionButtonText}>Switch Class</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={handleLogout}>
-                <Text style={[styles.actionButtonText, styles.logoutButton]}>Logout</Text>
+              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Text style={styles.logoutButtonText}>Logout</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -192,6 +199,15 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#DC3545',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 0,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

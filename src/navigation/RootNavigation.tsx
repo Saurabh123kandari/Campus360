@@ -6,6 +6,7 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import HomePlaceholder from '../screens/HomePlaceholder';
 import ParentTabs from './ParentTabs';
 import TeacherTabs from './TeacherTabs';
+import AdminTabs from './AdminTabs';
 
 const RootNavigation = () => {
   const { user, isLoading } = useAuth();
@@ -36,6 +37,9 @@ const RootNavigation = () => {
     } else if (user.role === 'teacher') {
       console.debug('🎯 Showing TeacherTabs for teacher user');
       return <TeacherTabs />;
+    } else if (user.role === 'schoolOwner') {
+      console.debug('🎯 Showing AdminTabs for schoolOwner user');
+      return <AdminTabs />;
     } else {
       console.debug('🎯 Showing HomePlaceholder for other user role');
       return <HomePlaceholder />;

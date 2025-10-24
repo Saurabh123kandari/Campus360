@@ -1,18 +1,17 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-interface TeacherHeaderRightProps {
-  onPress: () => void;
-}
-
-const TeacherHeaderRight: React.FC<TeacherHeaderRightProps> = ({ onPress }) => {
+const AdminHeaderRight: React.FC = () => {
+  const navigation = useNavigation<any>();
+  
   return (
     <TouchableOpacity
-      accessibilityLabel="Open profile"
-      onPress={onPress}
+      accessibilityLabel="Open admin profile"
+      onPress={() => navigation.navigate('AdminProfileModal')}
       style={styles.profileButton}
     >
-      <Text style={styles.profileIcon}>👤</Text>
+      <Text style={styles.profileIcon}>👨‍💼</Text>
     </TouchableOpacity>
   );
 };
@@ -33,6 +32,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TeacherHeaderRight;
-
-
+export default AdminHeaderRight;

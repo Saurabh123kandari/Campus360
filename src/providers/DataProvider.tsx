@@ -7,6 +7,7 @@ import studentsData from '../assets/data/students.json';
 import attendanceData from '../assets/data/attendance.json';
 import eventsData from '../assets/data/events.json';
 import paymentsData from '../assets/data/payments.json';
+import paymentsAdminData from '../assets/data/payments_admin.json';
 import teachersData from '../assets/data/teachers.json';
 import coursesData from '../assets/data/courses.json';
 import chatsData from '../assets/data/chats.json';
@@ -18,6 +19,7 @@ interface DataContextType {
   attendance: Attendance[];
   events: Event[];
   payments: Payment[];
+  paymentsAdmin: any[];
   teachers: any[];
   courses: any[];
   chats: any[];
@@ -47,6 +49,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentsAdmin, setPaymentsAdmin] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [chats, setChats] = useState<any[]>([]);
@@ -64,6 +67,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         setAttendance(attendanceData as Attendance[]);
         setEvents(eventsData as Event[]);
         setPayments(paymentsData as Payment[]);
+        setPaymentsAdmin(paymentsAdminData as any[]);
         setTeachers(teachersData as any[]);
         setCourses(coursesData as any[]);
         setChats(chatsData as any[]);
@@ -100,6 +104,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     attendance,
     events,
     payments,
+    paymentsAdmin,
     teachers,
     courses,
     chats,

@@ -1,20 +1,74 @@
 [
   {
     "id": "att-1",
-    "studentId": "student-1",
-    "date": "2024-01-15",
+    "studentId": "s_1",
+    "date": "2025-01-20",
     "status": "present"
   },
   {
     "id": "att-2",
-    "studentId": "student-1",
-    "date": "2024-01-16",
+    "studentId": "s_2",
+    "date": "2025-01-20",
     "status": "present"
   },
   {
     "id": "att-3",
-    "studentId": "student-2",
-    "date": "2024-01-15",
+    "studentId": "s_3",
+    "date": "2025-01-20",
+    "status": "present"
+  },
+  {
+    "id": "att-4",
+    "studentId": "s_4",
+    "date": "2025-01-20",
+    "status": "present"
+  },
+  {
+    "id": "att-5",
+    "studentId": "s_1",
+    "date": "2025-01-19",
+    "status": "present"
+  },
+  {
+    "id": "att-6",
+    "studentId": "s_2",
+    "date": "2025-01-19",
     "status": "late"
+  },
+  {
+    "id": "att-7",
+    "studentId": "s_3",
+    "date": "2025-01-19",
+    "status": "present"
+  },
+  {
+    "id": "att-8",
+    "studentId": "s_4",
+    "date": "2025-01-19",
+    "status": "absent"
+  },
+  {
+    "id": "att-9",
+    "studentId": "s_1",
+    "date": "2025-01-18",
+    "status": "present"
+  },
+  {
+    "id": "att-10",
+    "studentId": "s_2",
+    "date": "2025-01-18",
+    "status": "present"
+  },
+  {
+    "id": "att-11",
+    "studentId": "s_3",
+    "date": "2025-01-18",
+    "status": "late"
+  },
+  {
+    "id": "att-12",
+    "studentId": "s_4",
+    "date": "2025-01-18",
+    "status": "present"
   }
 ]

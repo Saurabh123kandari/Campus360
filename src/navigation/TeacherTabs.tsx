@@ -9,7 +9,6 @@ import AttendanceReportScreen from '../screens/teacher/AttendanceReportScreen';
 import CalendarScreen from '../screens/teacher/CalendarScreen';
 import TeacherChatDirectory from '../screens/teacher/TeacherChatDirectory';
 import ChatThreadScreen from '../screens/chat/ChatThreadScreen';
-import ProfileModal from '../screens/teacher/ProfileModal';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -22,11 +21,6 @@ const DashboardStack = () => (
       options={{
         headerShown: false,
       }}
-    />
-    <Stack.Screen
-      name="ProfileModal"
-      component={ProfileModal}
-      options={{ presentation: 'modal', title: 'Profile' }}
     />
   </Stack.Navigator>
 );
@@ -50,11 +44,6 @@ const AttendanceStack = () => (
       component={AttendanceReportScreen}
       options={{ title: 'Attendance Report' }}
     />
-    <Stack.Screen
-      name="ProfileModal"
-      component={ProfileModal}
-      options={{ presentation: 'modal', title: 'Profile' }}
-    />
   </Stack.Navigator>
 );
 
@@ -66,11 +55,6 @@ const CalendarStack = () => (
       options={{
         headerShown: false,
       }}
-    />
-    <Stack.Screen
-      name="ProfileModal"
-      component={ProfileModal}
-      options={{ presentation: 'modal', title: 'Profile' }}
     />
   </Stack.Navigator>
 );
@@ -85,11 +69,6 @@ const ChatStack = () => (
       }}
     />
     <Stack.Screen name="ChatThread" component={ChatThreadScreen} options={{ headerShown: false }} />
-    <Stack.Screen
-      name="ProfileModal"
-      component={ProfileModal}
-      options={{ presentation: 'modal', title: 'Profile' }}
-    />
   </Stack.Navigator>
 );
 

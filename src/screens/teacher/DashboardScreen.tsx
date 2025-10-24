@@ -11,12 +11,14 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
+import ProfileModal from './ProfileModal';
 
 const DashboardScreen = () => {
   const { user } = useAuth();
   const { students, attendance, events } = useData();
   const [selectedClass, setSelectedClass] = useState('class_1');
   const [loading, setLoading] = useState(true);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [classStats, setClassStats] = useState({
     present: 0,
     absent: 0,
@@ -98,7 +100,7 @@ const DashboardScreen = () => {
             <Text style={styles.logo}>📚 Padmai</Text>
             <View style={styles.headerRight}>
               <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
-              <TeacherHeaderRight />
+              <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
             </View>
           </View>
           <View style={styles.teacherInfo}>
@@ -223,6 +225,11 @@ const DashboardScreen = () => {
           </View>
         </View>
       </ScrollView>
+      
+      <ProfileModal
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

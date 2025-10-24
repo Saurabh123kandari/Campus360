@@ -142,7 +142,7 @@ const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
             <View style={styles.dividerLine} />
           </View>
 
-          <Text style={styles.quickLoginTitle}>Quick Login (Demo)</Text>
+          <Text style={styles.quickLoginTitle}>Quick Login</Text>
           
           <View style={styles.quickLoginButtons}>
             <TouchableOpacity
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    fontSize: 36,
+    fontSize: 48,
     fontWeight: 'bold',
     color: '#2F6FED',
     marginBottom: 8,

@@ -22,7 +22,7 @@ interface Payment {
   amount: number;
   description: string;
   dueDate: string;
-  status: 'pending' | 'paid';
+  status: 'pending' | 'paid' | 'overdue';
   paidOn?: string;
   reference?: string;
 }
@@ -69,9 +69,7 @@ const PaymentsScreen = () => {
       const total = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
       const pending = filteredPayments.filter(p => p.status === 'pending').length;
       const paid = filteredPayments.filter(p => p.status === 'paid').length;
-      const overdue = filteredPayments.filter(p => 
-        p.status === 'pending' && new Date(p.dueDate) < new Date()
-      ).length;
+      const overdue = filteredPayments.filter(p => p.status === 'overdue').length;
 
       setSummary({ total, pending, paid, overdue });
     } catch (error) {
@@ -95,14 +93,14 @@ const PaymentsScreen = () => {
 
   const getStatusColor = (status: string, dueDate: string) => {
     if (status === 'paid') return '#28A745';
-    if (status === 'pending' && new Date(dueDate) < new Date()) return '#DC3545';
+    if (status === 'overdue') return '#DC3545';
     if (status === 'pending') return '#FFC107';
     return '#6C757D';
   };
 
   const getStatusText = (status: string, dueDate: string) => {
     if (status === 'paid') return 'Paid';
-    if (status === 'pending' && new Date(dueDate) < new Date()) return 'Overdue';
+    if (status === 'overdue') return 'Overdue';
     if (status === 'pending') return 'Due';
     return 'Unknown';
   };
@@ -149,9 +147,7 @@ const PaymentsScreen = () => {
     const total = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
     const pending = updatedPayments.filter(p => p.status === 'pending').length;
     const paid = updatedPayments.filter(p => p.status === 'paid').length;
-    const overdue = updatedPayments.filter(p => 
-      p.status === 'pending' && new Date(p.dueDate) < new Date()
-    ).length;
+    const overdue = updatedPayments.filter(p => p.status === 'overdue').length;
 
     setSummary({ total, pending, paid, overdue });
 
@@ -204,6 +200,16 @@ const PaymentsScreen = () => {
             <Text style={styles.summaryLabel}>Paid</Text>
           </View>
         </View>
+        
+        {/* Overdue Alert */}
+        {summary.overdue > 0 && (
+          <View style={styles.overdueAlert}>
+            <Text style={styles.overdueIcon}>⚠️</Text>
+            <Text style={styles.overdueText}>
+              You have {summary.overdue} overdue payment{summary.overdue > 1 ? 's' : ''}. Please pay immediately to avoid additional charges.
+            </Text>
+          </View>
+        )}
 
         {/* Primary Action */}
         <TouchableOpacity
@@ -278,7 +284,7 @@ const PaymentsScreen = () => {
                     )}
                   </View>
 
-                  {payment.status === 'pending' && (
+                  {(payment.status === 'pending' || payment.status === 'overdue') && (
                     <TouchableOpacity
                       style={styles.markPaidButton}
                       onPress={() => handleMarkAsPaid(payment)}
@@ -436,6 +442,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
+  },
+  overdueAlert: {
+    backgroundColor: '#FFF3CD',
+    borderColor: '#FFC107',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  overdueIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  overdueText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#856404',
+    lineHeight: 18,
   },
   primaryActionButton: {
     backgroundColor: '#2F6FED',

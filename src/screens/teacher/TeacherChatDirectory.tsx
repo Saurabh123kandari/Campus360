@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
+import ProfileModal from './ProfileModal';
 
 const TeacherChatDirectory = () => {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ const TeacherChatDirectory = () => {
   const navigation = useNavigation<any>();
   const [loading, setLoading] = useState(true);
   const [chatThreads, setChatThreads] = useState<any[]>([]);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [selectedClass, setSelectedClass] = useState('class_1');
 
   useEffect(() => {
@@ -126,7 +128,7 @@ const TeacherChatDirectory = () => {
             <Text style={styles.logo}>📚 Padmai</Text>
             <View style={styles.headerRight}>
               <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
-              <TeacherHeaderRight />
+              <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
             </View>
           </View>
           <View style={styles.teacherInfo}>
@@ -245,6 +247,11 @@ const TeacherChatDirectory = () => {
           </View>
         </View>
       </ScrollView>
+      
+      <ProfileModal
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

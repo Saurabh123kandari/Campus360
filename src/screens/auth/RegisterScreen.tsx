@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   logo: {
-    fontSize: 36,
+    fontSize: 48,
     fontWeight: 'bold',
     color: '#2F6FED',
     marginBottom: 8,
