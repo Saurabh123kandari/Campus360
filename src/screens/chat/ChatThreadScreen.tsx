@@ -87,7 +87,7 @@ const ChatThreadScreen: React.FC<ChatThreadScreenProps> = ({ route, navigation }
       console.debug('Sending message:', newMessage);
       
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
       
       // Auto-scroll to bottom
       setTimeout(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,68 +7,112 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  TextInput,
+  Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../providers/DataProvider';
+import { useGetClassStudentsMutation } from '../../store/services/studentsApi';
+import { ClassStudentApi, GetClassStudentsSuccessResponse } from '../../types/students';
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
 import ProfileModal from './ProfileModal';
+import EmptyClassState from '../../components/teacher/EmptyClassState';
+
+type SortOption = 'name' | 'rollNo' | 'registrationNo';
 
 const DashboardScreen = () => {
+  const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const { students, attendance, events } = useData();
-  const [selectedClass, setSelectedClass] = useState('class_1');
+  const [getClassStudents] = useGetClassStudentsMutation();
+  const [classData, setClassData] = useState<GetClassStudentsSuccessResponse['data'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
-  const [classStats, setClassStats] = useState({
-    present: 0,
-    absent: 0,
-    total: 0,
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('name');
 
   useEffect(() => {
-    loadDashboardData();
-  }, [selectedClass]);
+    loadClassStudents();
+  }, []);
 
-  const loadDashboardData = async () => {
+  const loadClassStudents = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      // Simulate loading delay
-      await new Promise<void>(resolve => setTimeout(resolve, 500));
-
-      const classStudents = students.filter(s => s.classId === selectedClass);
-      const today = new Date().toISOString().split('T')[0];
-      
-      const todayAttendance = attendance.filter(a => 
-        classStudents.some(s => s.id === a.studentId) && 
-        a.date === today
-      );
-
-      const present = todayAttendance.filter(a => a.status === 'present').length;
-      const absent = todayAttendance.filter(a => a.status === 'absent').length;
-
-      setClassStats({
-        present,
-        absent,
-        total: classStudents.length,
-      });
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      const response = await getClassStudents({ teacherId: user.id }).unwrap();
+      if (response.success) {
+        setClassData(response.data);
+      } else {
+        setClassData(null);
+      }
+    } catch (error: any) {
+      console.error('Error loading class students:', error);
+      setClassData(null);
+      // Don't show error alert if it's just "no class assigned"
+      if (error?.data?.message !== 'No class assigned yet' && error?.data?.success !== false) {
+        Alert.alert('Error', 'Failed to load class data. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const getClassOptions = () => {
-    // TODO: Get teacher's actual classes
-    return [
-      { id: 'class_1', name: 'Class 1A' },
-      { id: 'class_2', name: 'Class 2B' },
-      { id: 'class_3', name: 'Class 3C' },
-    ];
+  const filteredAndSortedStudents = useMemo(() => {
+    if (!classData?.students) return [];
+
+    let filtered = classData.students;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (student) =>
+          student.firstName.toLowerCase().includes(query) ||
+          student.lastName.toLowerCase().includes(query) ||
+          student.registrationNo.toLowerCase().includes(query) ||
+          student.classRollNo.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+          const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+          return nameA.localeCompare(nameB);
+        case 'rollNo':
+          return parseInt(a.classRollNo) - parseInt(b.classRollNo);
+        case 'registrationNo':
+          return a.registrationNo.localeCompare(b.registrationNo);
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [classData?.students, searchQuery, sortBy]);
+
+  const handleMarkAttendance = () => {
+    navigation.navigate('TeacherAttendanceTab', {
+      screen: 'TakeAttendance',
+    });
   };
 
-  const getClassStudents = () => {
-    return students.filter(s => s.classId === selectedClass);
+  const handleViewProfile = (student: ClassStudentApi) => {
+    // TODO: Navigate to student profile or show modal
+    Alert.alert('Student Profile', `${student.firstName} ${student.lastName}\nRoll No: ${student.classRollNo}\nRegistration: ${student.registrationNo}`);
+  };
+
+  const handleContactAdmin = () => {
+    Alert.alert('Contact Admin', 'Please contact your administrator to get assigned to a class.');
+  };
+
+  const handleSwitchClass = () => {
+    Alert.alert('Switch Class', 'Class switching functionality will be available soon.');
   };
 
   const getRecentActivity = () => {
@@ -111,83 +155,134 @@ const DashboardScreen = () => {
             </View>
           </View>
           
-          <View style={styles.classSelector}>
-            <Text style={styles.selectorLabel}>Current Class:</Text>
-            <TouchableOpacity style={styles.selectorButton}>
-              <Text style={styles.selectorButtonText}>
-                {getClassOptions().find(c => c.id === selectedClass)?.name || 'Select Class'}
-              </Text>
-              <Text style={styles.selectorArrow}>▼</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Class Cards */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>My Classes</Text>
-          <View style={styles.classCards}>
-            {getClassOptions().map((classOption) => (
-              <TouchableOpacity
-                key={classOption.id}
-                style={[
-                  styles.classCard,
-                  selectedClass === classOption.id && styles.selectedClassCard
-                ]}
-                onPress={() => setSelectedClass(classOption.id)}
-              >
-                <Text style={styles.classCardTitle}>{classOption.name}</Text>
-                <Text style={styles.classCardCount}>
-                  {students.filter(s => s.classId === classOption.id).length} students
+          {classData && (
+            <View style={styles.classSelector}>
+              <Text style={styles.selectorLabel}>Current Class:</Text>
+              <TouchableOpacity style={styles.selectorButton}>
+                <Text style={styles.selectorButtonText}>
+                  Class {classData.class} - Section {classData.section}
                 </Text>
-                <TouchableOpacity style={styles.takeAttendanceButton}>
-                  <Text style={styles.takeAttendanceButtonText}>Take Attendance</Text>
-                </TouchableOpacity>
               </TouchableOpacity>
-            ))}
-          </View>
+            </View>
+          )}
         </View>
 
-        {/* Today's Stats */}
+        {/* My Classes / Students Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Attendance</Text>
-          <View style={styles.statsCard}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{classStats.present}</Text>
-              <Text style={styles.statLabel}>Present</Text>
+          <Text style={styles.sectionTitle}>My Classes / Students</Text>
+          
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#2F6FED" />
+              <Text style={styles.loadingText}>Loading class data...</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{classStats.absent}</Text>
-              <Text style={styles.statLabel}>Absent</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{classStats.total}</Text>
-              <Text style={styles.statLabel}>Total</Text>
-            </View>
-          </View>
-        </View>
+          ) : !classData ? (
+            <EmptyClassState
+              onContactAdmin={handleContactAdmin}
+              onSwitchClass={handleSwitchClass}
+            />
+          ) : (
+            <>
+              {/* Class Header & KPI */}
+              <View style={styles.classHeaderCard}>
+                <View style={styles.classHeader}>
+                  <Text style={styles.classHeaderTitle}>
+                    Class {classData.class} - Section {classData.section}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.takeAttendanceHeaderButton}
+                    onPress={handleMarkAttendance}
+                  >
+                    <Text style={styles.takeAttendanceHeaderButtonText}>Take Attendance</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.kpiCard}>
+                  <View style={styles.kpiItem}>
+                    <Text style={styles.kpiNumber}>{classData.count}</Text>
+                    <Text style={styles.kpiLabel}>Total Students</Text>
+                  </View>
+                </View>
+              </View>
 
-        {/* Student List */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Students ({getClassStudents().length})</Text>
-          {getClassStudents().map((student) => (
-            <View key={student.id} style={styles.studentItem}>
-              <View style={styles.studentAvatar}>
-                <Text style={styles.studentAvatarText}>
-                  {student.name.charAt(0)}
+              {/* Search and Sort */}
+              <View style={styles.searchSortContainer}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search students..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor="#999"
+                />
+                <View style={styles.sortContainer}>
+                  <Text style={styles.sortLabel}>Sort by:</Text>
+                  <TouchableOpacity
+                    style={[styles.sortButton, sortBy === 'name' && styles.sortButtonActive]}
+                    onPress={() => setSortBy('name')}
+                  >
+                    <Text style={[styles.sortButtonText, sortBy === 'name' && styles.sortButtonTextActive]}>Name</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.sortButton, sortBy === 'rollNo' && styles.sortButtonActive]}
+                    onPress={() => setSortBy('rollNo')}
+                  >
+                    <Text style={[styles.sortButtonText, sortBy === 'rollNo' && styles.sortButtonTextActive]}>Roll No</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.sortButton, sortBy === 'registrationNo' && styles.sortButtonActive]}
+                    onPress={() => setSortBy('registrationNo')}
+                  >
+                    <Text style={[styles.sortButtonText, sortBy === 'registrationNo' && styles.sortButtonTextActive]}>Reg No</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Students List */}
+              <View style={styles.studentsListContainer}>
+                <Text style={styles.studentsListTitle}>
+                  Students ({filteredAndSortedStudents.length})
                 </Text>
+                {filteredAndSortedStudents.length === 0 ? (
+                  <View style={styles.noStudentsContainer}>
+                    <Text style={styles.noStudentsText}>
+                      {searchQuery ? 'No students found matching your search.' : 'No students in this class.'}
+                    </Text>
+                  </View>
+                ) : (
+                  filteredAndSortedStudents.map((student) => (
+                    <View key={student._id} style={styles.studentItem}>
+                      <View style={styles.studentAvatar}>
+                        <Text style={styles.studentAvatarText}>
+                          {student.firstName.charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.studentInfo}>
+                        <Text style={styles.studentName}>
+                          {student.firstName} {student.lastName}
+                        </Text>
+                        <Text style={styles.studentDetails}>
+                          Roll No: {student.classRollNo} • Reg: {student.registrationNo}
+                        </Text>
+                      </View>
+                      <View style={styles.studentActions}>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleViewProfile(student)}
+                        >
+                          <Text style={styles.actionButtonText}>Profile</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.actionButtonPrimary]}
+                          onPress={handleMarkAttendance}
+                        >
+                          <Text style={styles.actionButtonPrimaryText}>Attendance</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))
+                )}
               </View>
-              <View style={styles.studentInfo}>
-                <Text style={styles.studentName}>{student.name}</Text>
-                <Text style={styles.studentGrade}>Grade {student.grade}</Text>
-              </View>
-              <View style={styles.studentActions}>
-                <Text style={styles.attendancePercentage}>85%</Text>
-                <TouchableOpacity style={styles.messageButton}>
-                  <Text style={styles.messageButtonText}>Message</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+            </>
+          )}
         </View>
 
         {/* Recent Activity */}
@@ -444,8 +539,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  studentDetails: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
   studentActions: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  actionButton: {
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  actionButtonPrimary: {
+    backgroundColor: '#2F6FED',
+  },
+  actionButtonText: {
+    color: '#2F6FED',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  actionButtonPrimaryText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
   },
   attendancePercentage: {
     fontSize: 14,
@@ -463,6 +584,122 @@ const styles = StyleSheet.create({
     color: '#2F6FED',
     fontSize: 12,
     fontWeight: '600',
+  },
+  classHeaderCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  classHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  classHeaderTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  takeAttendanceHeaderButton: {
+    backgroundColor: '#2F6FED',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  takeAttendanceHeaderButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  kpiCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  kpiItem: {
+    alignItems: 'center',
+  },
+  kpiNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2F6FED',
+  },
+  kpiLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  searchSortContainer: {
+    marginBottom: 16,
+  },
+  searchInput: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  sortLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 4,
+  },
+  sortButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  sortButtonActive: {
+    backgroundColor: '#2F6FED',
+    borderColor: '#2F6FED',
+  },
+  sortButtonText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  sortButtonTextActive: {
+    color: '#fff',
+  },
+  studentsListContainer: {
+    marginTop: 8,
+  },
+  studentsListTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 12,
+  },
+  noStudentsContainer: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  noStudentsText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
   activityItem: {
     backgroundColor: '#fff',

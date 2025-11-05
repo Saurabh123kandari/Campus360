@@ -15,7 +15,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import { useGetPaymentsByStudentIdMutation } from '../../store/services/paymentsApi';
 import { PaymentApiItem } from '../../types/payments';
+import { useGetStudentsByParentIdMutation } from '../../store/services/studentsApi';
+import { StudentApi } from '../../types/students';
 import ProfileIcon from '../../components/ProfileIcon';
+import AddStudentModal from '../../components/parent/AddStudentModal';
+import StudentCard from '../../components/parent/StudentCard';
+import StudentProfileModal from '../../components/parent/StudentProfileModal';
 
 interface QuickSummary {
   attendance: {
@@ -49,6 +54,14 @@ const HomeDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [apiPayments, setApiPayments] = useState<PaymentApiItem[]>([]);
   const [fetchPayments, { isLoading: loadingPayments }] = useGetPaymentsByStudentIdMutation();
+  
+  // Student management state
+  const [apiStudents, setApiStudents] = useState<StudentApi[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [showStudentProfileModal, setShowStudentProfileModal] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<StudentApi | null>(null);
+  const [getStudentsByParentId] = useGetStudentsByParentIdMutation();
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -163,11 +176,38 @@ const HomeDashboard = () => {
     }
   }, [reduxUser, user, students, attendance, events, fetchPayments]);
 
+  const loadStudents = useCallback(async () => {
+    const currentUser = reduxUser || user;
+    if (!currentUser?.id) {
+      return;
+    }
+
+    setLoadingStudents(true);
+    try {
+      const result = await getStudentsByParentId({ parentId: currentUser.id }).unwrap();
+      if (result.success && result.data?.students) {
+        setApiStudents(result.data.students);
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      // Silently fail - students list will be empty
+    } finally {
+      setLoadingStudents(false);
+    }
+  }, [reduxUser, user, getStudentsByParentId]);
+
   useEffect(() => {
     if (!dataLoading && students.length > 0) {
       loadDashboardData();
     }
   }, [dataLoading, students.length, loadDashboardData]);
+
+  useEffect(() => {
+    const currentUser = reduxUser || user;
+    if (currentUser?.id) {
+      loadStudents();
+    }
+  }, [reduxUser, user, loadStudents]);
 
 
   const handleQuickAction = (action: string) => {
@@ -189,6 +229,26 @@ const HomeDashboard = () => {
 
   const handleViewPayments = () => {
     Alert.alert('Navigation', 'Opening Payments screen...');
+  };
+
+  const handleAddStudentSuccess = () => {
+    loadStudents();
+  };
+
+  const handleStudentCardPress = (student: StudentApi) => {
+    setSelectedStudent(student);
+    setShowStudentProfileModal(true);
+  };
+
+  const handleStudentProfileSuccess = () => {
+    loadStudents();
+    setShowStudentProfileModal(false);
+    setSelectedStudent(null);
+  };
+
+  const handleStudentProfileClose = () => {
+    setShowStudentProfileModal(false);
+    setSelectedStudent(null);
   };
 
   if (loading) {
@@ -220,7 +280,7 @@ const HomeDashboard = () => {
           <View style={styles.headerTop}>
             <Text style={styles.logo}>📚 Padmai</Text>
             <View style={styles.headerRight}>
-              <Text style={styles.welcomeText}>Welcome, {currentUser?.name?.split(' ')[0]}!</Text>
+              <Text style={styles.welcomeText}>Welcome, {((currentUser as any)?.name || (currentUser as any)?.fullName || 'User')?.split(' ')[0]}!</Text>
               <ProfileIcon />
             </View>
           </View>
@@ -231,6 +291,43 @@ const HomeDashboard = () => {
                 <Text style={styles.childName}>{child.name}</Text>
                 <Text style={styles.childGrade}>Grade {child.grade}</Text>
               </View>
+            </View>
+          )}
+        </View>
+
+        {/* My Students Section */}
+        <View style={styles.studentsSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>My Students</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setShowAddStudentModal(true)}
+            >
+              <Text style={styles.addButtonText}>+ Add Student</Text>
+            </TouchableOpacity>
+          </View>
+          {loadingStudents ? (
+            <View style={styles.loadingStudentsContainer}>
+              <ActivityIndicator size="small" color="#2F6FED" />
+              <Text style={styles.loadingStudentsText}>Loading students...</Text>
+            </View>
+          ) : apiStudents.length > 0 ? (
+            <View style={styles.studentsList}>
+              {apiStudents.map((student) => (
+                <StudentCard
+                  key={student.id}
+                  student={student}
+                  onPress={() => handleStudentCardPress(student)}
+                />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateIcon}>👨‍🎓</Text>
+              <Text style={styles.emptyStateText}>No students added yet</Text>
+              <Text style={styles.emptyStateSubtext}>
+                Tap "Add Student" to add your child's information
+              </Text>
             </View>
           )}
         </View>
@@ -350,6 +447,19 @@ const HomeDashboard = () => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Modals */}
+      <AddStudentModal
+        visible={showAddStudentModal}
+        onClose={() => setShowAddStudentModal(false)}
+        onSuccess={handleAddStudentSuccess}
+      />
+      <StudentProfileModal
+        visible={showStudentProfileModal}
+        student={selectedStudent}
+        onClose={handleStudentProfileClose}
+        onSuccess={handleStudentProfileSuccess}
+      />
     </SafeAreaView>
   );
 };
@@ -592,6 +702,65 @@ const styles = StyleSheet.create({
   footerSubtext: {
     fontSize: 12,
     color: '#999',
+  },
+  studentsSection: {
+    padding: 20,
+    backgroundColor: '#fff',
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addButton: {
+    backgroundColor: '#2F6FED',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  studentsList: {
+    gap: 0,
+  },
+  loadingStudentsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    gap: 12,
+  },
+  loadingStudentsText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

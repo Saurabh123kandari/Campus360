@@ -52,7 +52,7 @@ const CalendarScreen = () => {
       setLoading(true);
       
       // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
 
       const child = students.find(s => s.id === user?.childId);
       if (!child) {
@@ -70,7 +70,7 @@ const CalendarScreen = () => {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 10); // Show next 10 events
 
-      setUpcomingEvents(filteredEvents);
+      setUpcomingEvents(filteredEvents as unknown as Event[]);
     } catch (error) {
       console.error('Error loading events:', error);
     } finally {

@@ -49,6 +49,9 @@ export interface Student {
   classId: string;
   parentId: string;
   grade: string;
+  class?: string;
+  teacher?: string;
+  avatar?: string;
 }
 
 export interface Attendance {

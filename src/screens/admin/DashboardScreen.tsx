@@ -9,19 +9,34 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import AdminHeaderRight from '../../components/admin/AdminHeaderRight';
 import StatCard from '../../components/admin/StatCard';
 import PaymentRow from '../../components/admin/PaymentRow';
 import { Payment } from '../../components/admin/PaymentRow';
+import { useGetTeachersQuery } from '../../store/services/teachersApi';
+
+type DashboardStackParamList = {
+  AdminDashboard: undefined;
+  StudentList: undefined;
+  TeacherList: undefined;
+  AdminProfileModal: undefined;
+};
+
+type DashboardScreenNavigationProp = NativeStackNavigationProp<DashboardStackParamList>;
 
 const DashboardScreen = () => {
+  const navigation = useNavigation<DashboardScreenNavigationProp>();
   const { user } = useAuth();
   const { students, attendance, events, paymentsAdmin } = useData();
+  const { data: teachersData, isLoading: teachersLoading } = useGetTeachersQuery();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     totalStudents: 0,
+    totalTeachers: 0,
     averageAttendance: 0,
     paymentsDue: 0,
     paymentsTotal: 0,
@@ -32,13 +47,16 @@ const DashboardScreen = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, [students, attendance, events, paymentsAdmin]);
+  }, [students, attendance, events, paymentsAdmin, teachersData]);
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
       // Calculate total students
       const totalStudents = students.length;
+
+      // Get total teachers from API
+      const totalTeachers = teachersData?.data?.count || 0;
 
       // Calculate average attendance for current term
       const today = new Date();
@@ -78,6 +96,7 @@ const DashboardScreen = () => {
 
       setDashboardData({
         totalStudents,
+        totalTeachers,
         averageAttendance,
         paymentsDue,
         paymentsTotal,
@@ -151,7 +170,7 @@ const DashboardScreen = () => {
     Alert.alert('Export CSV', 'CSV export functionality would be implemented here');
   };
 
-  if (loading) {
+  if (loading || teachersLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -183,13 +202,6 @@ const DashboardScreen = () => {
           </View>
         </View>
 
-        {/* Demo Notice */}
-        <View style={styles.demoNotice}>
-          <Text style={styles.demoText}>
-            📝 Demo Mode: All data is static and changes are in-memory only
-          </Text>
-        </View>
-
         {/* KPI Cards */}
         <View style={styles.kpiSection}>
           <Text style={styles.sectionTitle}>Key Performance Indicators</Text>
@@ -199,7 +211,16 @@ const DashboardScreen = () => {
               value={dashboardData.totalStudents}
               icon="👥"
               color="#2F6FED"
+              onPress={() => navigation.navigate('StudentList')}
               accessibilityLabel={`Total students: ${dashboardData.totalStudents}`}
+            />
+            <StatCard
+              title="Teachers"
+              value={dashboardData.totalTeachers}
+              icon="👨‍🏫"
+              color="#FF6B35"
+              onPress={() => navigation.navigate('TeacherList')}
+              accessibilityLabel={`Total teachers: ${dashboardData.totalTeachers}`}
             />
             <StatCard
               title="Avg Attendance"
@@ -312,181 +333,190 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    color: '#6c757d',
+    fontWeight: '500',
+    lineHeight: 22,
   },
   content: {
     flex: 1,
   },
   header: {
     backgroundColor: '#2F6FED',
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingTop: 44,
+    paddingBottom: 24,
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '700',
     color: '#fff',
+    letterSpacing: 0.5,
   },
   welcomeText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#B3D4FF',
+    lineHeight: 22,
   },
   adminInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   adminAvatar: {
-    fontSize: 24,
-    marginRight: 12,
+    fontSize: 28,
+    marginRight: 14,
   },
   adminDetails: {
     flex: 1,
   },
   adminName: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#fff',
-    marginBottom: 2,
+    marginBottom: 4,
+    lineHeight: 26,
+    letterSpacing: 0.2,
   },
   adminRole: {
     fontSize: 14,
     color: '#B3D4FF',
-  },
-  demoNotice: {
-    backgroundColor: '#fff3cd',
-    padding: 12,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#ffc107',
-  },
-  demoText: {
-    fontSize: 14,
-    color: '#856404',
-    textAlign: 'center',
+    lineHeight: 20,
+    fontWeight: '500',
   },
   kpiSection: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   section: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#212529',
+    marginBottom: 18,
+    letterSpacing: 0.3,
+    lineHeight: 28,
   },
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   viewAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: '#2F6FED',
-    borderRadius: 8,
+    borderRadius: 10,
+    shadowColor: '#2F6FED',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   viewAllText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   attendanceCard: {
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 18,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   attendanceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   className: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#212529',
+    letterSpacing: 0.2,
+    lineHeight: 22,
   },
   attendancePercentage: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#2F6FED',
+    letterSpacing: -0.5,
   },
   attendanceBar: {
-    height: 8,
+    height: 10,
     backgroundColor: '#e9ecef',
-    borderRadius: 4,
-    marginBottom: 8,
+    borderRadius: 5,
+    marginBottom: 10,
     overflow: 'hidden',
   },
   attendanceFill: {
     height: '100%',
     backgroundColor: '#2F6FED',
-    borderRadius: 4,
+    borderRadius: 5,
   },
   attendanceDetails: {
     fontSize: 14,
-    color: '#666',
+    color: '#6c757d',
+    lineHeight: 20,
+    fontWeight: '500',
   },
   quickActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 14,
   },
   quickActionButton: {
     backgroundColor: '#fff',
-    padding: 16,
+    padding: 18,
     borderRadius: 12,
     alignItems: 'center',
     width: '48%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
     elevation: 3,
   },
   quickActionIcon: {
-    fontSize: 24,
-    marginBottom: 8,
+    fontSize: 28,
+    marginBottom: 10,
   },
   quickActionText: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '600',
+    fontSize: 13,
+    color: '#212529',
+    fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: 0.2,
+    lineHeight: 18,
   },
 });
 

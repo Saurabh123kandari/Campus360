@@ -219,7 +219,7 @@ const AttendanceReportScreen = () => {
                       {student.name.charAt(0)}
                     </Text>
                   </View>
-                  <View style={styles.studentDetails}>
+                  <View style={styles.studentInfoInner}>
                     <Text style={styles.studentName}>{student.name}</Text>
                     <Text style={styles.studentGrade}>Grade {student.grade}</Text>
                   </View>
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  studentDetails: {
+  studentInfoInner: {
     flex: 1,
   },
   studentName: {

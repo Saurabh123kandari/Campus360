@@ -23,6 +23,7 @@ const ParentTabs = () => {
 
 const MainTabs = () => {
   return (
+    // @ts-ignore - id prop type issue with react-navigation v7
     <Tab.Navigator
       screenOptions={{
         headerShown: false,

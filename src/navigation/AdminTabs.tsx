@@ -7,6 +7,8 @@ import PaymentsScreen from '../screens/admin/PaymentsScreen';
 import StatisticsScreen from '../screens/admin/StatisticsScreen';
 import AcademicEventsScreen from '../screens/admin/AcademicEventsScreen';
 import ProfileModal from '../screens/admin/ProfileModal';
+import StudentListScreen from '../screens/admin/StudentListScreen';
+import TeacherListScreen from '../screens/admin/TeacherListScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -16,6 +18,20 @@ const DashboardStack = () => (
     <Stack.Screen
       name="AdminDashboard"
       component={DashboardScreen}
+      options={{
+        headerShown: false,
+      }}
+    />
+    <Stack.Screen
+      name="StudentList"
+      component={StudentListScreen}
+      options={{
+        headerShown: false,
+      }}
+    />
+    <Stack.Screen
+      name="TeacherList"
+      component={TeacherListScreen}
       options={{
         headerShown: false,
       }}
@@ -80,6 +96,7 @@ const EventsStack = () => (
 );
 
 const AdminTabs = () => (
+  // @ts-ignore - id prop type issue with react-navigation v7
   <Tab.Navigator
     screenOptions={{
       headerShown: false,
