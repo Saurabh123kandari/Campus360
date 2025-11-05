@@ -10,7 +10,9 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
+import { useDispatch } from 'react-redux';
+import { useLoginMutation } from '../../store/services/authApi';
+import { persistCredentials, setCredentials } from '../../store/slices/authSlice';
 import { useToast } from '../../contexts/ToastContext';
 
 interface LoginScreenProps {
@@ -21,7 +23,8 @@ const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const dispatch = useDispatch();
+  const [loginMutation, { isLoading: isLoggingIn }] = useLoginMutation();
   const { showToast } = useToast();
 
   const validateEmail = (email: string): boolean => {
@@ -50,15 +53,25 @@ const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
     }
 
     setLoading(true);
+    const timeoutMs = 15000;
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject({ error: 'Request timed out' }), timeoutMs));
     try {
-      const result = await login(email.trim(), password);
-      if (!result.success) {
-        showToast(result.error || 'Invalid credentials', 'error');
-      } else {
-        showToast('Login successful!', 'success');
-      }
-    } catch (error) {
-      showToast('Login failed. Please try again.', 'error');
+      const response = await Promise.race([
+        loginMutation({ email: email.trim(), password }).unwrap(),
+        timeoutPromise,
+      ]) as any;
+      const apiUser = response.data.user;
+      const token = response.data.token;
+      const normalizedRole = apiUser.role === 'admin' ? 'schoolOwner' : apiUser.role;
+      const userForState: any = { id: apiUser.id, name: apiUser.name, email: apiUser.email, role: normalizedRole };
+
+      dispatch(setCredentials({ token, user: userForState }));
+      await persistCredentials(token, userForState);
+      showToast('Login successful!', 'success');
+    } catch (error: any) {
+      const apiMessage = error?.data?.message || error?.error || 'Login failed. Please try again.';
+      console.debug('Login error', JSON.stringify(error));
+      showToast(apiMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -75,13 +88,22 @@ const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
     setPassword(credentials[role].password);
     
     setLoading(true);
+    const timeoutMs = 15000;
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject({ error: 'Request timed out' }), timeoutMs));
     try {
-      const result = await login(credentials[role].email, credentials[role].password);
-      if (!result.success) {
-        Alert.alert('Login Failed', result.error || 'Invalid credentials');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      const response = await Promise.race([
+        loginMutation({ email: credentials[role].email, password: credentials[role].password }).unwrap(),
+        timeoutPromise,
+      ]) as any;
+      const apiUser = response.data.user;
+      const token = response.data.token;
+      const normalizedRole = apiUser.role === 'admin' ? 'schoolOwner' : apiUser.role;
+      const userForState: any = { id: apiUser.id, name: apiUser.name, email: apiUser.email, role: normalizedRole };
+      dispatch(setCredentials({ token, user: userForState }));
+      await persistCredentials(token, userForState);
+    } catch (error: any) {
+      console.debug('Quick login error', JSON.stringify(error));
+      Alert.alert('Login Failed', error?.data?.message || error?.error || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -129,7 +151,7 @@ const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
             onPress={handleLogin}
             disabled={loading}
           >
-            {loading ? (
+            {(loading || isLoggingIn) ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.loginButtonText}>Sign In</Text>

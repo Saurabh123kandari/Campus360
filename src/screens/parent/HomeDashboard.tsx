@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,12 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
+import { useGetPaymentsByStudentIdMutation } from '../../store/services/paymentsApi';
+import { PaymentApiItem } from '../../types/payments';
 import ProfileIcon from '../../components/ProfileIcon';
 
 interface QuickSummary {
@@ -38,22 +42,21 @@ interface RecentActivity {
 
 const HomeDashboard = () => {
   const { user } = useAuth();
-  const { students, events, payments, attendance } = useData();
+  const reduxUser = useSelector((state: RootState) => state.auth.user);
+  const { students, events, attendance, isLoading: dataLoading } = useData();
   const [summary, setSummary] = useState<QuickSummary | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiPayments, setApiPayments] = useState<PaymentApiItem[]>([]);
+  const [fetchPayments, { isLoading: loadingPayments }] = useGetPaymentsByStudentIdMutation();
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
-      // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Find child data
-      const child = students.find(s => s.id === user?.childId);
+      // Find child data - use childId from user or fallback to static student
+      const currentUser = reduxUser || user;
+      const childId = (currentUser as any)?.childId;
+      const child = childId ? students.find(s => s.id === childId) : students.find(s => s.id === 's_1');
+      
       if (!child) {
         setLoading(false);
         return;
@@ -75,20 +78,46 @@ const HomeDashboard = () => {
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 3);
 
-      // Get payment status
-      const userPayments = payments.filter(p => p.parentId === user?.id);
-      const duePayments = userPayments.filter(p => p.status === 'pending');
-      const totalDue = duePayments.reduce((sum, p) => sum + p.amount, 0);
-
-      setSummary({
-        attendance: { present, absent, percentage },
-        upcomingEvents: upcomingEvents.length,
-        payments: {
-          due: duePayments.length,
-          amount: totalDue,
-          status: duePayments.length > 0 ? 'Due' : 'Paid'
-        }
-      });
+      // Fetch payment data from API using studentId with timeout
+      // Use hardcoded STU001 as fallback similar to PaymentsScreen
+      const studentId = 'STU001';
+      
+      const paymentPromise = fetchPayments({ studentId }).unwrap();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Payment API timeout')), 3000)
+      );
+      
+      try {
+        const paymentsResponse = await Promise.race([paymentPromise, timeoutPromise]) as any;
+        const paymentsData = paymentsResponse.data?.payments || [];
+        setApiPayments(paymentsData);
+        
+        // Calculate payment summary from API data
+        const totalAmount = paymentsData.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const paymentCount = paymentsData.length;
+        
+        setSummary({
+          attendance: { present, absent, percentage },
+          upcomingEvents: upcomingEvents.length,
+          payments: {
+            due: paymentCount,
+            amount: totalAmount,
+            status: paymentCount > 0 ? 'Due' : 'Paid'
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+        // Fallback to default summary if API fails
+        setSummary({
+          attendance: { present, absent, percentage },
+          upcomingEvents: upcomingEvents.length,
+          payments: {
+            due: 0,
+            amount: 0,
+            status: 'Paid'
+          }
+        });
+      }
 
       // Generate recent activity
       const activities: RecentActivity[] = [
@@ -132,7 +161,14 @@ const HomeDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reduxUser, user, students, attendance, events, fetchPayments]);
+
+  useEffect(() => {
+    if (!dataLoading && students.length > 0) {
+      loadDashboardData();
+    }
+  }, [dataLoading, students.length, loadDashboardData]);
+
 
   const handleQuickAction = (action: string) => {
     switch (action) {
@@ -164,7 +200,17 @@ const HomeDashboard = () => {
     );
   }
 
-  const child = students.find(s => s.id === user?.childId);
+  const currentUser = reduxUser || user;
+  const childId = (currentUser as any)?.childId;
+  const child = childId ? students.find(s => s.id === childId) : students.find(s => s.id === 's_1');
+
+  const formatCurrency = (amount: number) => {
+    try {
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+    } catch {
+      return `₹${amount}`;
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -174,7 +220,7 @@ const HomeDashboard = () => {
           <View style={styles.headerTop}>
             <Text style={styles.logo}>📚 Padmai</Text>
             <View style={styles.headerRight}>
-              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
+              <Text style={styles.welcomeText}>Welcome, {currentUser?.name?.split(' ')[0]}!</Text>
               <ProfileIcon />
             </View>
           </View>
@@ -229,7 +275,7 @@ const HomeDashboard = () => {
               <Text style={styles.cardIcon}>💳</Text>
               <Text style={styles.cardTitle}>Payments</Text>
               <Text style={styles.cardValue}>
-                ${summary?.payments.amount || 0}
+                {summary?.payments.amount ? formatCurrency(summary.payments.amount) : '₹0'}
               </Text>
               <View style={[
                 styles.statusBadge,

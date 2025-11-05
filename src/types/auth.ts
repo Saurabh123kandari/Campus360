@@ -1,18 +1,35 @@
 export type Role = 'parent' | 'teacher' | 'schoolOwner';
 
+// API role values; map app 'schoolOwner' -> api 'admin' when sending requests
+export type ApiRole = 'parent' | 'teacher' | 'admin';
+
 export interface User {
   id: string;
-  fullName: string;
+  fullName: string; // API returns `name`; app uses `fullName`
   email: string;
   role: Role;
   childId?: string; // Only for parents
   createdAt: string;
 }
 
+export interface EditProfilePayload {
+  name: string;
+  email: string;
+}
+
+export interface EditProfileResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: { id: string; name: string; email: string; role: 'parent' | 'teacher' | 'admin' };
+  };
+}
+
 export interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (userData: RegisterPayload) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (profileData: EditProfilePayload) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isLoading: boolean;
 }

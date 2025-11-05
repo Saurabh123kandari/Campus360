@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,76 +8,58 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  TextInput,
-  Modal,
+  RefreshControl,
 } from 'react-native';
 import { Linking } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../providers/DataProvider';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { useGetPaymentsByStudentIdMutation } from '../../store/services/paymentsApi';
+import { PaymentApiItem } from '../../types/payments';
 import ProfileIcon from '../../components/ProfileIcon';
 
-interface Payment {
-  id: string;
-  parentId: string;
-  amount: number;
-  description: string;
-  dueDate: string;
-  status: 'pending' | 'paid' | 'overdue';
-  paidOn?: string;
-  reference?: string;
-}
-
 interface PaymentSummary {
-  total: number;
-  pending: number;
-  paid: number;
-  overdue: number;
+  totalAmount: number;
+  count: number;
 }
 
 const PaymentsScreen = () => {
-  const { user } = useAuth();
-  const { payments } = useData();
-  const [userPayments, setUserPayments] = useState<Payment[]>([]);
-  const [summary, setSummary] = useState<PaymentSummary>({
-    total: 0,
-    pending: 0,
-    paid: 0,
-    overdue: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [showMarkPaidModal, setShowMarkPaidModal] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [reference, setReference] = useState('');
-  const [paidDate, setPaidDate] = useState('');
+  const user = useSelector((s: RootState) => s.auth.user as any);
+  const [fetchPayments, { data, isLoading, isError, error, isUninitialized }]
+    = useGetPaymentsByStudentIdMutation();
+  const [userPayments, setUserPayments] = useState<PaymentApiItem[]>([]);
+  const [summary, setSummary] = useState<PaymentSummary>({ totalAmount: 0, count: 0 });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const studentId = 'STU001';
 
   useEffect(() => {
-    loadPayments();
-  }, []);
-
-  const loadPayments = async () => {
-    try {
-      setLoading(true);
-      
-      // Simulate loading delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Filter payments for current user
-      const filteredPayments = payments.filter(p => p.parentId === user?.id);
-      setUserPayments(filteredPayments);
-
-      // Calculate summary
-      const total = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
-      const pending = filteredPayments.filter(p => p.status === 'pending').length;
-      const paid = filteredPayments.filter(p => p.status === 'paid').length;
-      const overdue = filteredPayments.filter(p => p.status === 'overdue').length;
-
-      setSummary({ total, pending, paid, overdue });
-    } catch (error) {
-      console.error('Error loading payments:', error);
-    } finally {
-      setLoading(false);
+    if (studentId) {
+      fetchPayments({ studentId })
+        .unwrap()
+        .then((res) => {
+          setUserPayments(res.data.payments || []);
+          const totalAmount = (res.data.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+          setSummary({ totalAmount, count: res.data.count || (res.data.payments || []).length });
+        })
+        .catch(() => {
+          setUserPayments([]);
+          setSummary({ totalAmount: 0, count: 0 });
+        });
     }
-  };
+  }, [studentId, fetchPayments]);
+
+  const onRefresh = useCallback(() => {
+    if (!studentId) return;
+    setRefreshing(true);
+    fetchPayments({ studentId })
+      .unwrap()
+      .then((res) => {
+        setUserPayments(res.data.payments || []);
+        const totalAmount = (res.data.payments || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+        setSummary({ totalAmount, count: res.data.count || (res.data.payments || []).length });
+      })
+      .finally(() => setRefreshing(false));
+  }, [studentId, fetchPayments]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -88,7 +70,11 @@ const PaymentsScreen = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+    try {
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+    } catch {
+      return `₹${amount}`;
+    }
   };
 
   const getStatusColor = (status: string, dueDate: string) => {
@@ -112,60 +98,29 @@ const PaymentsScreen = () => {
     });
   };
 
-  const handleMarkAsPaid = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setReference('');
-    setPaidDate(new Date().toISOString().split('T')[0]);
-    setShowMarkPaidModal(true);
-  };
+  // Local mark-as-paid UI removed for API-driven listing
 
-  const confirmMarkAsPaid = () => {
-    if (!selectedPayment || !reference.trim()) {
-      Alert.alert('Error', 'Please enter a reference number');
-      return;
-    }
-
-    // Update payment in memory
-    const updatedPayments = userPayments.map(p => 
-      p.id === selectedPayment.id 
-        ? { 
-            ...p, 
-            status: 'paid' as const, 
-            paidOn: paidDate, 
-            reference: reference.trim() 
-          }
-        : p
+  if (!studentId) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>No student linked to this account.</Text>
+      </View>
     );
-    
-    setUserPayments(updatedPayments);
-    setShowMarkPaidModal(false);
-    setSelectedPayment(null);
-    setReference('');
-    setPaidDate('');
+  }
 
-    // Recalculate summary
-    const total = updatedPayments.reduce((sum, p) => sum + p.amount, 0);
-    const pending = updatedPayments.filter(p => p.status === 'pending').length;
-    const paid = updatedPayments.filter(p => p.status === 'paid').length;
-    const overdue = updatedPayments.filter(p => p.status === 'overdue').length;
-
-    setSummary({ total, pending, paid, overdue });
-
-    Alert.alert('Success', 'Payment marked as paid successfully!');
-  };
-
-  const cancelMarkAsPaid = () => {
-    setShowMarkPaidModal(false);
-    setSelectedPayment(null);
-    setReference('');
-    setPaidDate('');
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2F6FED" />
         <Text style={styles.loadingText}>Loading payments...</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Failed to load payments.</Text>
       </View>
     );
   }
@@ -184,32 +139,20 @@ const PaymentsScreen = () => {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> }>
         {/* Summary Cards */}
         <View style={styles.summaryContainer}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{formatCurrency(summary.total)}</Text>
+            <Text style={styles.summaryNumber}>{formatCurrency(summary.totalAmount)}</Text>
             <Text style={styles.summaryLabel}>Total Amount</Text>
           </View>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{summary.pending}</Text>
-            <Text style={styles.summaryLabel}>Pending</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{summary.paid}</Text>
-            <Text style={styles.summaryLabel}>Paid</Text>
+            <Text style={styles.summaryNumber}>{summary.count}</Text>
+            <Text style={styles.summaryLabel}>Payments</Text>
           </View>
         </View>
         
-        {/* Overdue Alert */}
-        {summary.overdue > 0 && (
-          <View style={styles.overdueAlert}>
-            <Text style={styles.overdueIcon}>⚠️</Text>
-            <Text style={styles.overdueText}>
-              You have {summary.overdue} overdue payment{summary.overdue > 1 ? 's' : ''}. Please pay immediately to avoid additional charges.
-            </Text>
-          </View>
-        )}
+        {/* Overdue Alert removed (API doesn't provide status) */}
 
         {/* Primary Action */}
         <TouchableOpacity
@@ -234,66 +177,43 @@ const PaymentsScreen = () => {
             </View>
           ) : (
             userPayments
-              .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .map((payment) => (
-                <View key={payment.id} style={styles.paymentCard}>
+                <View key={payment._id} style={styles.paymentCard}>
                   <View style={styles.paymentHeader}>
                     <Text style={styles.paymentAmount}>
                       {formatCurrency(payment.amount)}
                     </Text>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusColor(payment.status, payment.dueDate) }
-                      ]}
-                    >
-                      <Text style={styles.statusText}>
-                        {getStatusText(payment.status, payment.dueDate)}
-                      </Text>
+                  <View style={styles.statusBadge}>
+                      <Text style={styles.statusText}>{payment.paymentType?.toUpperCase?.() || payment.paymentType}</Text>
                     </View>
                   </View>
 
-                  <Text style={styles.paymentDescription}>
-                    {payment.description}
+                  <Text style={styles.paymentDescription} numberOfLines={1}>
+                    {payment.name}
                   </Text>
+                  <View style={styles.divider} />
 
                   <View style={styles.paymentDetails}>
                     <View style={styles.paymentDetail}>
-                      <Text style={styles.paymentDetailIcon}>📅</Text>
+                      <Text style={styles.paymentDetailIcon}>👤</Text>
                       <Text style={styles.paymentDetailText}>
-                        Due: {formatDate(payment.dueDate)}
+                        Student: {payment.studentName}
                       </Text>
                     </View>
-                    
-                    {payment.status === 'paid' && payment.paidOn && (
-                      <View style={styles.paymentDetail}>
-                        <Text style={styles.paymentDetailIcon}>✅</Text>
-                        <Text style={styles.paymentDetailText}>
-                          Paid: {formatDate(payment.paidOn)}
-                        </Text>
-                      </View>
-                    )}
-                    
-                    {payment.status === 'paid' && payment.reference && (
-                      <View style={styles.paymentDetail}>
-                        <Text style={styles.paymentDetailIcon}>🔢</Text>
-                        <Text style={styles.paymentDetailText}>
-                          Ref: {payment.reference}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  {(payment.status === 'pending' || payment.status === 'overdue') && (
-                    <TouchableOpacity
-                      style={styles.markPaidButton}
-                      onPress={() => handleMarkAsPaid(payment)}
-                    >
-                      <Text style={styles.markPaidButtonText}>
-                        Mark as Paid (I paid)
+                    <View style={styles.paymentDetail}>
+                      <Text style={styles.paymentDetailIcon}>🏫</Text>
+                      <Text style={styles.paymentDetailText}>
+                        Class: {payment.className}
                       </Text>
-                    </TouchableOpacity>
-                  )}
+                    </View>
+                    <View style={styles.paymentDetail}>
+                      <Text style={styles.paymentDetailIcon}>📅</Text>
+                      <Text style={styles.paymentDetailText}>
+                        Created: {formatDate(payment.createdAt)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               ))
           )}
@@ -314,58 +234,7 @@ const PaymentsScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Mark as Paid Modal */}
-      <Modal
-        visible={showMarkPaidModal}
-        transparent
-        animationType="slide"
-        onRequestClose={cancelMarkAsPaid}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Mark as Paid</Text>
-            <Text style={styles.modalSubtitle}>
-              Enter payment details for {selectedPayment?.description}
-            </Text>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Reference Number *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={reference}
-                onChangeText={setReference}
-                placeholder="Enter payment reference"
-                autoCapitalize="characters"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Payment Date *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={paidDate}
-                onChangeText={setPaidDate}
-                placeholder="YYYY-MM-DD"
-              />
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={cancelMarkAsPaid}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={confirmMarkAsPaid}
-              >
-                <Text style={styles.confirmButtonText}>Confirm</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Modal removed — read-only listing */}
     </SafeAreaView>
   );
 };
@@ -520,13 +389,15 @@ const styles = StyleSheet.create({
   paymentCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
+    padding: 18,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#eee',
   },
   paymentHeader: {
     flexDirection: 'row',
@@ -535,24 +406,31 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   paymentAmount: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#2F6FED',
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+    backgroundColor: '#E8F0FF',
   },
   statusText: {
-    color: '#fff',
+    color: '#2F6FED',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   paymentDescription: {
     fontSize: 16,
-    color: '#333',
-    marginBottom: 12,
+    color: '#222',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginBottom: 10,
   },
   paymentDetails: {
     marginBottom: 12,
@@ -569,7 +447,7 @@ const styles = StyleSheet.create({
   },
   paymentDetailText: {
     fontSize: 14,
-    color: '#666',
+    color: '#555',
   },
   markPaidButton: {
     backgroundColor: '#28A745',

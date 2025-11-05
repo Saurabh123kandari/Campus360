@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import HomePlaceholder from '../screens/HomePlaceholder';
@@ -9,7 +10,8 @@ import TeacherTabs from './TeacherTabs';
 import AdminTabs from './AdminTabs';
 
 const RootNavigation = () => {
-  const { user, isLoading } = useAuth();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const isHydrated = useSelector((state: RootState) => state.auth.isHydrated);
   const [currentScreen, setCurrentScreen] = useState<'login' | 'register'>('login');
 
   // Reset to login screen when user logs out
@@ -19,7 +21,7 @@ const RootNavigation = () => {
     }
   }, [user]);
 
-  if (isLoading) {
+  if (!isHydrated) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2F6FED" />
@@ -37,7 +39,7 @@ const RootNavigation = () => {
     } else if (user.role === 'teacher') {
       console.debug('🎯 Showing TeacherTabs for teacher user');
       return <TeacherTabs />;
-    } else if (user.role === 'schoolOwner') {
+    } else if (user.role === 'schoolOwner' || user.role === 'admin') {
       console.debug('🎯 Showing AdminTabs for schoolOwner user');
       return <AdminTabs />;
     } else {

@@ -10,7 +10,9 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
+import { useDispatch } from 'react-redux';
+import { useRegisterMutation } from '../../store/services/authApi';
+import { persistCredentials, setCredentials } from '../../store/slices/authSlice';
 import { useToast } from '../../contexts/ToastContext';
 import { useData } from '../../providers/DataProvider';
 import { Role } from '../../types/auth';
@@ -27,7 +29,8 @@ const RegisterScreen = ({ onNavigateToLogin }: RegisterScreenProps) => {
   const [role, setRole] = useState<Role>('parent');
   const [childId, setChildId] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const dispatch = useDispatch();
+  const [registerMutation, { isLoading: isRegistering }] = useRegisterMutation();
   const { students } = useData();
   const { showToast } = useToast();
 
@@ -69,22 +72,30 @@ const RegisterScreen = ({ onNavigateToLogin }: RegisterScreenProps) => {
 
     setLoading(true);
     try {
-      const result = await register({
-        fullName: fullName.trim(),
+      const apiRole = role === 'schoolOwner' ? 'admin' : role;
+      const response = await registerMutation({
+        name: fullName.trim(),
         email: email.trim(),
         password,
-        confirmPassword,
-        role,
-        childId: role === 'parent' ? childId.trim() : undefined,
-      });
+        role: apiRole,
+      }).unwrap();
 
-      if (result.success) {
-        showToast('Registration successful! Welcome to Padmai!', 'success');
-      } else {
-        showToast(result.error || 'Registration failed', 'error');
-      }
-    } catch (error) {
-      showToast('Registration failed. Please try again.', 'error');
+      const apiUser = response.data.user;
+      const token = response.data.token;
+      const normalizedRole = (apiUser.role === 'admin' ? 'schoolOwner' : apiUser.role) as Role;
+      const userForState: any = {
+        id: apiUser.id,
+        name: apiUser.name,
+        email: apiUser.email,
+        role: normalizedRole,
+      };
+
+      dispatch(setCredentials({ token, user: userForState }));
+      await persistCredentials(token, userForState);
+      showToast('Registration successful! Welcome to Padmai!', 'success');
+    } catch (error: any) {
+      const apiMessage = error?.data?.message || 'Registration failed. Please try again.';
+      showToast(apiMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -217,7 +228,7 @@ const RegisterScreen = ({ onNavigateToLogin }: RegisterScreenProps) => {
             onPress={handleRegister}
             disabled={loading}
           >
-            {loading ? (
+            {(loading || isRegistering) ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.registerButtonText}>Create Account</Text>

@@ -14,6 +14,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import { useNavigation } from '@react-navigation/native';
 import { useModal } from '../../contexts/ModalContext';
+import EditProfileModal from '../../components/EditProfileModal';
 
 const { width } = Dimensions.get('window');
 
@@ -30,14 +31,12 @@ const ProfileScreen = () => {
   const { students } = useData();
   const navigation = useNavigation();
   const { showConfirm, showAlert } = useModal();
-  const [isEditing, setIsEditing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const child = students.find(s => s.id === user?.childId);
 
   const handleEditProfile = () => {
-    setIsEditing(true);
-    showAlert('Edit Profile', 'Profile editing functionality will be implemented');
-    setTimeout(() => setIsEditing(false), 1000);
+    setShowEditModal(true);
   };
 
   const handleChangePassword = () => {
@@ -299,6 +298,11 @@ const ProfileScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      <EditProfileModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+      />
     </SafeAreaView>
   );
 };

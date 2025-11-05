@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,12 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useCustomModal } from '../../hooks/useCustomModal';
 import CustomModal from '../../components/CustomModal';
+import EditProfileModal from '../../components/EditProfileModal';
 
 const ProfileModal = () => {
   const { user, logout } = useAuth();
   const { visible, config, showConfirm, hideModal } = useCustomModal();
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleLogout = () => {
     showConfirm(
@@ -177,7 +179,7 @@ const ProfileModal = () => {
           
           <TouchableOpacity
             style={styles.actionItem}
-            onPress={() => showConfirm('Edit Profile', 'Profile editing would be implemented here', () => {})}
+            onPress={() => setShowEditModal(true)}
             accessibilityLabel="Edit profile information"
           >
             <View style={styles.actionIcon}>
@@ -237,6 +239,11 @@ const ProfileModal = () => {
         showIcon={config.showIcon}
         buttons={config.buttons}
         onClose={hideModal}
+      />
+
+      <EditProfileModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
       />
     </SafeAreaView>
   );

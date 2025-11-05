@@ -60,14 +60,28 @@ const ChatScreen = () => {
       // Simulate loading delay
       await new Promise<void>(resolve => setTimeout(resolve, 500));
 
-      const child = students.find(s => s.id === user?.childId);
-      if (!child) {
-        setLoading(false);
-        return;
+      // Resolve effective parent id from fixtures when Redux user id doesn't match JSON
+      let effectiveParentId: string | undefined = user?.id;
+      const hasChatsForUser = chats.some(c => c.parentId === effectiveParentId);
+      if (!hasChatsForUser) {
+        const matchedParent = users.find(
+          u => u.email === (user as any)?.email || u.fullName === (user as any)?.name || u.fullName === (user as any)?.fullName
+        );
+        if (matchedParent) {
+          effectiveParentId = matchedParent.id;
+        }
+      }
+      if (!chats.some(c => c.parentId === effectiveParentId)) {
+        effectiveParentId = chats[0]?.parentId; // final fallback to demo data
       }
 
+      // Resolve a child for UI copy/fallbacks
+      const childFromUser = students.find(s => (user as any)?.childId && s.id === (user as any)?.childId);
+      const childFromChats = students.find(s => chats.find(c => c.parentId === effectiveParentId && c.studentId === s.id));
+      const child = childFromUser || childFromChats || students[0];
+
       // Get actual chat threads from data
-      const parentChats = chats.filter(chat => chat.parentId === user?.id);
+      const parentChats = chats.filter(chat => chat.parentId === effectiveParentId);
       
       // Enhance with teacher and student info
       const enhancedThreads = parentChats.map(chat => {
@@ -114,7 +128,7 @@ const ChatScreen = () => {
         {
           id: 'msg-2',
           senderId: user?.id || '',
-          senderName: user?.fullName || '',
+          senderName: ((user as any)?.fullName || (user as any)?.name || ''),
           senderRole: 'parent',
           content: 'Thank you for the update! That\'s great to hear.',
           timestamp: '2024-01-20T10:35:00Z',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
+import EditProfileModal from '../../components/EditProfileModal';
 
 interface ProfileModalProps {
   visible: boolean;
@@ -19,6 +20,7 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
   const { user, logout } = useAuth();
   const { students } = useData();
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const handleLogout = () => {
     try {
@@ -83,6 +85,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Quick Actions</Text>
+              <TouchableOpacity style={styles.actionButton} onPress={() => setShowEditModal(true)}>
+                <Text style={styles.actionButtonText}>✏️ Edit Profile</Text>
+              </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} onPress={handleSwitchClass}>
                 <Text style={styles.actionButtonText}>Switch Class</Text>
               </TouchableOpacity>
@@ -92,6 +97,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ visible, onClose }) => {
             </View>
           </ScrollView>
         </View>
+
+        <EditProfileModal
+          visible={showEditModal}
+          onClose={() => setShowEditModal(false)}
+        />
       </SafeAreaView>
     </Modal>
   );
