@@ -21,6 +21,9 @@ import ProfileIcon from '../../components/ProfileIcon';
 import AddStudentModal from '../../components/parent/AddStudentModal';
 import StudentCard from '../../components/parent/StudentCard';
 import StudentProfileModal from '../../components/parent/StudentProfileModal';
+import WelcomeCard from '../../components/WelcomeCard';
+import WelcomeCarouselModal from '../../components/WelcomeCarouselModal';
+import { trackWelcomeCardImpression } from '../../utils/analytics';
 
 interface QuickSummary {
   attendance: {
@@ -62,6 +65,7 @@ const HomeDashboard = () => {
   const [showStudentProfileModal, setShowStudentProfileModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentApi | null>(null);
   const [getStudentsByParentId] = useGetStudentsByParentIdMutation();
+  const [isCarouselVisible, setIsCarouselVisible] = useState(false);
 
   const loadDashboardData = useCallback(async () => {
     try {
@@ -207,6 +211,7 @@ const HomeDashboard = () => {
     if (currentUser?.id) {
       loadStudents();
     }
+    trackWelcomeCardImpression('parent');
   }, [reduxUser, user, loadStudents]);
 
 
@@ -294,6 +299,12 @@ const HomeDashboard = () => {
             </View>
           )}
         </View>
+
+        {/* Welcome Card */}
+        <WelcomeCard
+          onPress={() => setIsCarouselVisible(true)}
+          accentColor="#007AFF"
+        />
 
         {/* My Students Section */}
         <View style={styles.studentsSection}>
@@ -459,6 +470,11 @@ const HomeDashboard = () => {
         student={selectedStudent}
         onClose={handleStudentProfileClose}
         onSuccess={handleStudentProfileSuccess}
+      />
+      <WelcomeCarouselModal
+        visible={isCarouselVisible}
+        onClose={() => setIsCarouselVisible(false)}
+        userRole="parent"
       />
     </SafeAreaView>
   );

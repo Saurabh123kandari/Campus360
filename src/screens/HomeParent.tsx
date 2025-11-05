@@ -11,6 +11,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents } from '../api/api';
 import { format } from 'date-fns';
+import WelcomeCard from '../components/WelcomeCard';
+import WelcomeCarouselModal from '../components/WelcomeCarouselModal';
+import { trackWelcomeCardImpression } from '../utils/analytics';
 
 interface Event {
   id: string;
@@ -24,9 +27,11 @@ const HomeParent = ({ navigation }: any) => {
   const { user } = useAuth();
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCarouselVisible, setIsCarouselVisible] = useState(false);
 
   useEffect(() => {
     loadUpcomingEvents();
+    trackWelcomeCardImpression('parent');
   }, []);
 
   const loadUpcomingEvents = async () => {
@@ -50,6 +55,11 @@ const HomeParent = ({ navigation }: any) => {
         <Text style={styles.greeting}>Hi, {user?.name} — Parent</Text>
         <Text style={styles.subtitle}>Welcome to your dashboard</Text>
       </View>
+
+      <WelcomeCard
+        onPress={() => setIsCarouselVisible(true)}
+        accentColor="#007AFF"
+      />
 
       <View style={styles.quickActions}>
         <TouchableOpacity
@@ -90,6 +100,12 @@ const HomeParent = ({ navigation }: any) => {
           </View>
         )}
       </View>
+
+      <WelcomeCarouselModal
+        visible={isCarouselVisible}
+        onClose={() => setIsCarouselVisible(false)}
+        userRole="parent"
+      />
     </ScrollView>
   );
 };

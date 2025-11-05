@@ -11,6 +11,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents, fetchPayments } from '../api/api';
 import { format } from 'date-fns';
+import WelcomeCard from '../components/WelcomeCard';
+import WelcomeCarouselModal from '../components/WelcomeCarouselModal';
+import { trackWelcomeCardImpression } from '../utils/analytics';
 
 interface Event {
   id: string;
@@ -33,9 +36,11 @@ const HomeAdmin = ({ navigation }: any) => {
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCarouselVisible, setIsCarouselVisible] = useState(false);
 
   useEffect(() => {
     loadData();
+    trackWelcomeCardImpression('admin');
   }, []);
 
   const loadData = async () => {
@@ -69,6 +74,11 @@ const HomeAdmin = ({ navigation }: any) => {
         <Text style={styles.greeting}>Hi, {user?.name} — Admin</Text>
         <Text style={styles.subtitle}>Welcome to your dashboard</Text>
       </View>
+
+      <WelcomeCard
+        onPress={() => setIsCarouselVisible(true)}
+        accentColor="#DC3545"
+      />
 
       <View style={styles.quickActions}>
         <TouchableOpacity
@@ -137,6 +147,12 @@ const HomeAdmin = ({ navigation }: any) => {
           </View>
         )}
       </View>
+
+      <WelcomeCarouselModal
+        visible={isCarouselVisible}
+        onClose={() => setIsCarouselVisible(false)}
+        userRole="admin"
+      />
     </ScrollView>
   );
 };

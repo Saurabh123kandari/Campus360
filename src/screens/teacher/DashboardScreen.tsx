@@ -17,6 +17,9 @@ import { ClassStudentApi, GetClassStudentsSuccessResponse } from '../../types/st
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
 import ProfileModal from './ProfileModal';
 import EmptyClassState from '../../components/teacher/EmptyClassState';
+import WelcomeCard from '../../components/WelcomeCard';
+import WelcomeCarouselModal from '../../components/WelcomeCarouselModal';
+import { trackWelcomeCardImpression } from '../../utils/analytics';
 
 type SortOption = 'name' | 'rollNo' | 'registrationNo';
 
@@ -29,9 +32,11 @@ const DashboardScreen = () => {
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('name');
+  const [isCarouselVisible, setIsCarouselVisible] = useState(false);
 
   useEffect(() => {
     loadClassStudents();
+    trackWelcomeCardImpression('teacher');
   }, []);
 
   const loadClassStudents = async () => {
@@ -166,6 +171,12 @@ const DashboardScreen = () => {
             </View>
           )}
         </View>
+
+        {/* Welcome Card */}
+        <WelcomeCard
+          onPress={() => setIsCarouselVisible(true)}
+          accentColor="#28A745"
+        />
 
         {/* My Classes / Students Section */}
         <View style={styles.section}>
@@ -324,6 +335,11 @@ const DashboardScreen = () => {
       <ProfileModal
         visible={profileModalVisible}
         onClose={() => setProfileModalVisible(false)}
+      />
+      <WelcomeCarouselModal
+        visible={isCarouselVisible}
+        onClose={() => setIsCarouselVisible(false)}
+        userRole="teacher"
       />
     </SafeAreaView>
   );

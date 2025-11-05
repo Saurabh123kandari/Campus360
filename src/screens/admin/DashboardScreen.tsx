@@ -18,6 +18,9 @@ import StatCard from '../../components/admin/StatCard';
 import PaymentRow from '../../components/admin/PaymentRow';
 import { Payment } from '../../components/admin/PaymentRow';
 import { useGetTeachersQuery } from '../../store/services/teachersApi';
+import WelcomeCard from '../../components/WelcomeCard';
+import WelcomeCarouselModal from '../../components/WelcomeCarouselModal';
+import { trackWelcomeCardImpression } from '../../utils/analytics';
 
 type DashboardStackParamList = {
   AdminDashboard: undefined;
@@ -44,9 +47,11 @@ const DashboardScreen = () => {
   });
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
+  const [isCarouselVisible, setIsCarouselVisible] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
+    trackWelcomeCardImpression('admin');
   }, [students, attendance, events, paymentsAdmin, teachersData]);
 
   const loadDashboardData = async () => {
@@ -202,6 +207,12 @@ const DashboardScreen = () => {
           </View>
         </View>
 
+        {/* Welcome Card */}
+        <WelcomeCard
+          onPress={() => setIsCarouselVisible(true)}
+          accentColor="#DC3545"
+        />
+
         {/* KPI Cards */}
         <View style={styles.kpiSection}>
           <Text style={styles.sectionTitle}>Key Performance Indicators</Text>
@@ -318,6 +329,12 @@ const DashboardScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      <WelcomeCarouselModal
+        visible={isCarouselVisible}
+        onClose={() => setIsCarouselVisible(false)}
+        userRole="admin"
+      />
     </SafeAreaView>
   );
 };
