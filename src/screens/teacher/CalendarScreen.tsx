@@ -13,12 +13,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
 import ProfileModal from './ProfileModal';
+import AppLogo from '../../components/common/AppLogo';
 import MonthGrid from '../../components/calendar/MonthGrid';
 import EventListItem from '../../components/EventListItem';
 
 const CalendarScreen = () => {
   const { user } = useAuth();
-  const { events, users, students } = useData();
+  const { events, users, students, teachers } = useData();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
@@ -48,6 +49,44 @@ const CalendarScreen = () => {
     const userData = users.find(u => u.id === userId);
     return userData ? userData.fullName : 'Unknown Teacher';
   };
+
+  const getTeacherName = () => {
+    // Try user.fullName first (if it exists)
+    if (user?.fullName) return user.fullName;
+    
+    // Try user.name from AuthContext
+    if (user?.name) return user.name;
+    
+    // Try to find in teachers array
+    if (user?.id) {
+      const teacher = teachers?.find((t: any) => t.id === user.id);
+      if (teacher?.fullName) return teacher.fullName;
+      
+      // Fallback to users array
+      const userData = users?.find((u: any) => u.id === user.id);
+      if (userData?.fullName) return userData.fullName;
+    }
+    
+    return null;
+  };
+
+  const getTeacherSubject = () => {
+    if (!user?.id) return null;
+    
+    // Try to find in teachers array first
+    const teacher = teachers?.find((t: any) => t.id === user.id);
+    if (teacher?.subject) return teacher.subject;
+    
+    // Fallback to users array
+    const userData = users?.find((u: any) => u.id === user.id);
+    return userData?.subject || null;
+  };
+
+  const teacherName = getTeacherName();
+  const teacherFirstName = teacherName ? teacherName.split(' ')[0] : 'Teacher';
+  const teacherFullName = teacherName || 'Teacher Name';
+  const teacherSubject = getTeacherSubject();
+  const teacherRoleText = teacherSubject ? `${teacherSubject} Teacher` : 'Teacher';
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
@@ -122,11 +161,10 @@ const CalendarScreen = () => {
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
             <View style={styles.appBranding}>
-              <Text style={styles.appIcon}>📚</Text>
-              <Text style={styles.appName}>Padmai</Text>
+              <AppLogo />
             </View>
             <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0] || 'Teacher'}!</Text>
+              <Text style={styles.welcomeText}>Welcome, {teacherFirstName}!</Text>
               <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
             </View>
           </View>
@@ -137,8 +175,8 @@ const CalendarScreen = () => {
             <Text style={styles.teacherAvatarText}>👨‍🏫</Text>
           </View>
           <View style={styles.teacherDetails}>
-            <Text style={styles.teacherName}>{user?.fullName || 'Teacher Name'}</Text>
-            <Text style={styles.teacherRole}>Mathematics Teacher</Text>
+            <Text style={styles.teacherName}>{teacherFullName}</Text>
+            <Text style={styles.teacherRole}>{teacherRoleText}</Text>
           </View>
         </View>
       </View>
@@ -305,18 +343,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   appBranding: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 8,
-  },
-  appIcon: {
-    fontSize: 24,
-    marginRight: 8,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
   },
   welcomeSection: {
     flexDirection: 'row',

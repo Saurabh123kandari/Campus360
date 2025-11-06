@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
 import AdminHeaderRight from '../../components/admin/AdminHeaderRight';
 import StatCard from '../../components/admin/StatCard';
+import AppLogo from '../../components/common/AppLogo';
 
 const StatisticsScreen = () => {
   const { user } = useAuth();
@@ -402,7 +403,9 @@ const StatisticsScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={styles.logo}>📚 Padmai</Text>
+            <View style={styles.logoContainer}>
+              <AppLogo />
+            </View>
             <View style={styles.headerRight}>
               <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
               <AdminHeaderRight />
@@ -472,11 +475,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
-  logo: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 0.5,
+  logoContainer: {
+    flex: 1,
+    maxWidth: '70%',
   },
   welcomeText: {
     fontSize: 16,

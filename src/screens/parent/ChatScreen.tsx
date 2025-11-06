@@ -113,51 +113,6 @@ const ChatScreen = () => {
         };
       });
 
-      // Mock messages for active thread
-      const mockMessages: Message[] = [
-        {
-          id: 'msg-1',
-          senderId: 'teacher-1',
-          senderName: 'Ms. Johnson',
-          senderRole: 'teacher',
-          content: `Hello! ${child.name} had a wonderful day today. They participated actively in all activities.`,
-          timestamp: '2024-01-20T10:30:00Z',
-          isRead: true,
-          type: 'message',
-        },
-        {
-          id: 'msg-2',
-          senderId: user?.id || '',
-          senderName: ((user as any)?.fullName || (user as any)?.name || ''),
-          senderRole: 'parent',
-          content: 'Thank you for the update! That\'s great to hear.',
-          timestamp: '2024-01-20T10:35:00Z',
-          isRead: true,
-          type: 'message',
-        },
-        {
-          id: 'msg-3',
-          senderId: 'teacher-1',
-          senderName: 'Ms. Johnson',
-          senderRole: 'teacher',
-          content: 'I\'ve assigned a new math homework for tomorrow.',
-          timestamp: '2024-01-20T11:00:00Z',
-          isRead: true,
-          type: 'task',
-          taskId: 'task-1',
-        },
-        {
-          id: 'msg-4',
-          senderId: 'teacher-1',
-          senderName: 'Ms. Johnson',
-          senderRole: 'teacher',
-          content: 'Please ensure they complete pages 45-50 in their workbook.',
-          timestamp: '2024-01-20T11:01:00Z',
-          isRead: false,
-          type: 'message',
-        },
-      ];
-
       setChatThreads(enhancedThreads);
     } catch (error) {
       console.error('Error loading chat data:', error);
@@ -367,7 +322,16 @@ const ChatScreen = () => {
           style={styles.messagesContainer}
           contentContainerStyle={styles.messagesContent}
         >
-          {messages.map((msg) => (
+          {messages.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateIcon}>💬</Text>
+              <Text style={styles.emptyStateTitle}>No Messages Yet</Text>
+              <Text style={styles.emptyStateText}>
+                Start the conversation by sending a message.
+              </Text>
+            </View>
+          ) : (
+            messages.map((msg) => (
             <View
               key={msg.id}
               style={[
@@ -419,7 +383,8 @@ const ChatScreen = () => {
                 </View>
               </View>
             </View>
-          ))}
+          ))
+          )}
         </ScrollView>
 
         <KeyboardAvoidingView
@@ -617,6 +582,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  emptyState: {
+    backgroundColor: '#fff',
+    padding: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    margin: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   chatContainer: {
     flex: 1,

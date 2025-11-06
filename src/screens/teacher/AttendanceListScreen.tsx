@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { format } from 'date-fns';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGetClassAttendanceMutation } from '../../store/services/attendanceApi';
-import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
+import TeacherHeader from '../../components/teacher/TeacherHeader';
 import ProfileModal from './ProfileModal';
 
 const AttendanceListScreen = () => {
@@ -130,22 +130,10 @@ const AttendanceListScreen = () => {
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <View style={styles.headerTop}>
-              <Text style={styles.logo}>📚 Padmai</Text>
-              <View style={styles.headerRight}>
-                <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
-                <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
-              </View>
-            </View>
-            <View style={styles.teacherInfo}>
-              <Text style={styles.teacherAvatar}>👩‍🏫</Text>
-              <View style={styles.teacherDetails}>
-                <Text style={styles.teacherName}>{user?.fullName}</Text>
-                <Text style={styles.teacherRole}>Teacher</Text>
-              </View>
-            </View>
-          </View>
+          <TeacherHeader
+            user={user}
+            onProfilePress={() => setProfileModalVisible(true)}
+          />
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
               You have not been assigned to a class yet. Please contact your administrator.
@@ -164,29 +152,12 @@ const AttendanceListScreen = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={styles.logo}>📚 Padmai</Text>
-            <View style={styles.headerRight}>
-              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
-              <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
-            </View>
-          </View>
-          <View style={styles.teacherInfo}>
-            <Text style={styles.teacherAvatar}>👩‍🏫</Text>
-            <View style={styles.teacherDetails}>
-              <Text style={styles.teacherName}>{user?.fullName}</Text>
-              <Text style={styles.teacherRole}>Teacher</Text>
-            </View>
-          </View>
-          {classData && (
-            <View style={styles.classInfo}>
-              <Text style={styles.classInfoText}>
-                Class {classData.class} - Section {classData.section}
-              </Text>
-            </View>
-          )}
-        </View>
+        <TeacherHeader
+          user={user}
+          onProfilePress={() => setProfileModalVisible(true)}
+          showClassInfo={!!classData}
+          classInfo={classData ? `Class ${classData.class} - Section ${classData.section}` : undefined}
+        />
 
         {/* Date Selector */}
         <View style={styles.dateSelector}>
@@ -284,64 +255,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  header: {
-    backgroundColor: '#2F6FED',
-    paddingTop: 40,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  welcomeText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#B3D4FF',
-  },
-  teacherInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  teacherAvatar: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  teacherDetails: {
-    flex: 1,
-  },
-  teacherName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  teacherRole: {
-    fontSize: 14,
-    color: '#B3D4FF',
-  },
-  classInfo: {
-    marginTop: 8,
-  },
-  classInfoText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -354,10 +267,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
   },
   dateSelector: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   dateInput: {
     backgroundColor: '#fff',
@@ -421,6 +334,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
     marginBottom: 20,
+    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -455,6 +369,7 @@ const styles = StyleSheet.create({
   },
   studentList: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   listTitle: {
     fontSize: 18,
@@ -529,6 +444,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   primaryButton: {
     flex: 1,

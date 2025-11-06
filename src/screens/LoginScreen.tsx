@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import AppLogo from '../components/common/AppLogo';
 
 const LoginScreen = () => {
   const [name, setName] = useState('');
@@ -34,7 +35,9 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Padmai</Text>
+      <View style={styles.logoContainer}>
+        <AppLogo size="large" textStyle={styles.logoText} />
+      </View>
       <Text style={styles.subtitle}>School Management System</Text>
       
       <View style={styles.form}>
@@ -93,11 +96,11 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f5f5f5',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  logoContainer: {
+    alignItems: 'center',
     marginBottom: 8,
+  },
+  logoText: {
     color: '#333',
   },
   subtitle: {

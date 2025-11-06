@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useData } from '../../providers/DataProvider';
 import { useGetClassStudentsMutation } from '../../store/services/studentsApi';
 import { ClassStudentApi, GetClassStudentsSuccessResponse } from '../../types/students';
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
@@ -27,6 +28,7 @@ type SortOption = 'name' | 'rollNo' | 'registrationNo';
 const DashboardScreen = () => {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
+  const { teachers, users } = useData();
   const [getClassStudents] = useGetClassStudentsMutation();
   const [classData, setClassData] = useState<GetClassStudentsSuccessResponse['data'] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,21 @@ const DashboardScreen = () => {
     loadClassStudents();
     trackWelcomeCardImpression('teacher');
   }, []);
+
+  const getTeacherSubject = () => {
+    if (!user?.id) return null;
+    
+    // Try to find in teachers array first
+    const teacher = teachers?.find((t: any) => t.id === user.id);
+    if (teacher?.subject) return teacher.subject;
+    
+    // Fallback to users array
+    const userData = users?.find((u: any) => u.id === user.id);
+    return userData?.subject || null;
+  };
+
+  const teacherSubject = getTeacherSubject();
+  const teacherRoleText = teacherSubject ? `${teacherSubject} Teacher` : 'Teacher';
 
   const loadClassStudents = async () => {
     if (!user?.id) {
@@ -164,7 +181,7 @@ const DashboardScreen = () => {
             <Text style={styles.teacherAvatar}>👩‍🏫</Text>
             <View style={styles.teacherDetails}>
               <Text style={styles.teacherName}>{user?.name || 'User'}</Text>
-              <Text style={styles.teacherRole}>Mathematics Teacher</Text>
+              <Text style={styles.teacherRole}>{teacherRoleText}</Text>
             </View>
           </View>
           

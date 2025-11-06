@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../providers/DataProvider';
-import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
+import TeacherHeader from '../../components/teacher/TeacherHeader';
 import ProfileModal from './ProfileModal';
 
 const TeacherChatDirectory = () => {
@@ -123,22 +123,10 @@ const TeacherChatDirectory = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={styles.logo}>📚 Padmai</Text>
-            <View style={styles.headerRight}>
-              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
-              <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
-            </View>
-          </View>
-          <View style={styles.teacherInfo}>
-            <Text style={styles.teacherAvatar}>👩‍🏫</Text>
-            <View style={styles.teacherDetails}>
-              <Text style={styles.teacherName}>{user?.fullName}</Text>
-              <Text style={styles.teacherRole}>Teacher</Text>
-            </View>
-          </View>
-        </View>
+        <TeacherHeader
+          user={user}
+          onProfilePress={() => setProfileModalVisible(true)}
+        />
 
         {/* Class Selector */}
         <View style={styles.classSelector}>
@@ -261,56 +249,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  header: {
-    backgroundColor: '#2F6FED',
-    paddingTop: 40,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  welcomeText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#B3D4FF',
-  },
-  teacherInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  teacherAvatar: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  teacherDetails: {
-    flex: 1,
-  },
-  teacherName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  teacherRole: {
-    fontSize: 14,
-    color: '#B3D4FF',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -323,10 +261,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
   },
   classSelector: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   selectorLabel: {
     fontSize: 16,
@@ -363,6 +301,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   quickActionButton: {
     flex: 1,
@@ -388,6 +327,7 @@ const styles = StyleSheet.create({
   },
   threadsSection: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 18,
@@ -492,6 +432,7 @@ const styles = StyleSheet.create({
   },
   activitySection: {
     marginBottom: 20,
+    paddingHorizontal: 20,
   },
   activityItem: {
     backgroundColor: '#fff',

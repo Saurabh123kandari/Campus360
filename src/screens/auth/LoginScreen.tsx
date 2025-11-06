@@ -14,6 +14,7 @@ import { useDispatch } from 'react-redux';
 import { useLoginMutation } from '../../store/services/authApi';
 import { persistCredentials, setCredentials } from '../../store/slices/authSlice';
 import { useToast } from '../../contexts/ToastContext';
+import AppLogo from '../../components/common/AppLogo';
 
 interface LoginScreenProps {
   onNavigateToRegister: () => void;
@@ -113,7 +114,9 @@ const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.logo}>Padmai</Text>
+          <View style={styles.logoContainer}>
+            <AppLogo size="large" textStyle={styles.logoText} />
+          </View>
           <Text style={styles.subtitle}>School Management System</Text>
         </View>
 
@@ -223,11 +226,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 40,
   },
-  logo: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#2F6FED',
+  logoContainer: {
+    alignItems: 'center',
     marginBottom: 8,
+  },
+  logoText: {
+    color: '#2F6FED',
   },
   subtitle: {
     fontSize: 16,

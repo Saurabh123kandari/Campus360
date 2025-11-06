@@ -145,33 +145,43 @@ const ChatThreadScreen: React.FC<ChatThreadScreenProps> = ({ route, navigation }
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
       >
-        {messages.map((msg) => (
-          <View
-            key={msg.id}
-            style={[
-              styles.messageContainer,
-              isMyMessage(msg.senderId) ? styles.myMessage : styles.otherMessage
-            ]}
-          >
-            <View style={[
-              styles.messageBubble,
-              isMyMessage(msg.senderId) ? styles.myMessageBubble : styles.otherMessageBubble
-            ]}>
-              <Text style={[
-                styles.messageText,
-                isMyMessage(msg.senderId) ? styles.myMessageText : styles.otherMessageText
-              ]}>
-                {msg.content}
-              </Text>
-              <Text style={[
-                styles.messageTime,
-                isMyMessage(msg.senderId) ? styles.myMessageTime : styles.otherMessageTime
-              ]}>
-                {formatTime(msg.timestamp)}
-              </Text>
-            </View>
+        {messages.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateIcon}>💬</Text>
+            <Text style={styles.emptyStateTitle}>No Messages Yet</Text>
+            <Text style={styles.emptyStateText}>
+              Start the conversation by sending a message.
+            </Text>
           </View>
-        ))}
+        ) : (
+          messages.map((msg) => (
+            <View
+              key={msg.id}
+              style={[
+                styles.messageContainer,
+                isMyMessage(msg.senderId) ? styles.myMessage : styles.otherMessage
+              ]}
+            >
+              <View style={[
+                styles.messageBubble,
+                isMyMessage(msg.senderId) ? styles.myMessageBubble : styles.otherMessageBubble
+              ]}>
+                <Text style={[
+                  styles.messageText,
+                  isMyMessage(msg.senderId) ? styles.myMessageText : styles.otherMessageText
+                ]}>
+                  {msg.content}
+                </Text>
+                <Text style={[
+                  styles.messageTime,
+                  isMyMessage(msg.senderId) ? styles.myMessageTime : styles.otherMessageTime
+                ]}>
+                  {formatTime(msg.timestamp)}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
       </ScrollView>
 
       {/* Message Input */}
@@ -338,6 +348,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  emptyState: {
+    backgroundColor: '#fff',
+    padding: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    margin: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

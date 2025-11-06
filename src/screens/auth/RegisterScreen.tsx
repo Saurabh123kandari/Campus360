@@ -107,7 +107,9 @@ const RegisterScreen = ({ onNavigateToLogin }: RegisterScreenProps) => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.logo}>Padmai</Text>
+          <View style={styles.logoContainer}>
+            <AppLogo size="large" textStyle={styles.logoText} />
+          </View>
           <Text style={styles.subtitle}>Create Your Account</Text>
         </View>
 
@@ -263,11 +265,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 30,
   },
-  logo: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#2F6FED',
+  logoContainer: {
+    alignItems: 'center',
     marginBottom: 8,
+  },
+  logoText: {
+    color: '#2F6FED',
   },
   subtitle: {
     fontSize: 16,
