@@ -11,6 +11,31 @@ const StudentCard: React.FC<StudentCardProps> = ({ student, onPress }) => {
   const fullName = `${student.firstName} ${student.lastName}`;
   const classSection = `${student.class}${student.section ? `-${student.section}` : ''}`;
 
+  // Determine attendance status badge
+  const getAttendanceBadge = () => {
+    const status = student.attendanceStatus;
+    
+    if (status === 'present') {
+      return {
+        text: 'Present',
+        backgroundColor: '#28A745', // Green
+      };
+    } else if (status === 'absent') {
+      return {
+        text: 'Absent',
+        backgroundColor: '#DC3545', // Red
+      };
+    } else {
+      // Default to "Active" for null/undefined (backward compatibility)
+      return {
+        text: 'Active',
+        backgroundColor: '#28A745', // Green (same as original Active)
+      };
+    }
+  };
+
+  const badge = getAttendanceBadge();
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.cardContent}>
@@ -26,10 +51,10 @@ const StudentCard: React.FC<StudentCardProps> = ({ student, onPress }) => {
           <Text style={styles.rollNo}>Roll No: {student.classRollNo}</Text>
         </View>
 
-        {/* Quick Status Indicators */}
+        {/* Attendance Status Badge */}
         <View style={styles.statusContainer}>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>Active</Text>
+          <View style={[styles.statusBadge, { backgroundColor: badge.backgroundColor }]}>
+            <Text style={styles.statusText}>{badge.text}</Text>
           </View>
         </View>
       </View>
@@ -87,7 +112,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   statusBadge: {
-    backgroundColor: '#28A745',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,

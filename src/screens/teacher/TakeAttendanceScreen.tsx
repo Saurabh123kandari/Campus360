@@ -7,77 +7,165 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
+  TextInput,
 } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { format } from 'date-fns';
 import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../providers/DataProvider';
+import { useGetClassAttendanceMutation, useSetAttendanceMutation } from '../../store/services/attendanceApi';
+import type { AttendanceStudent } from '../../store/services/attendanceApi';
 
 const TakeAttendanceScreen = () => {
+  const route = useRoute();
   const { user } = useAuth();
-  const { students, attendance } = useData();
-  const [selectedClass, setSelectedClass] = useState('class_1');
-  const [attendanceData, setAttendanceData] = useState<{[key: string]: string}>({});
+  const [getClassAttendance, { isLoading: isLoadingAttendance }] = useGetClassAttendanceMutation();
+  const [setAttendance] = useSetAttendanceMutation();
+  
+  // Get date from route params if provided, otherwise use today
+  const routeDate = (route.params as any)?.date;
+  const [selectedDate, setSelectedDate] = useState(
+    routeDate || format(new Date(), 'yyyy-MM-dd')
+  );
+  const [classData, setClassData] = useState<{
+    class: string;
+    section: string;
+    students: AttendanceStudent[];
+  } | null>(null);
+  const [attendanceData, setAttendanceData] = useState<{[key: string]: 'present' | 'absent'}>({});
+  const [originalAttendanceData, setOriginalAttendanceData] = useState<{[key: string]: 'present' | 'absent' | null}>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    initializeAttendance();
-  }, [selectedClass]);
+    loadAttendance();
+  }, [selectedDate]);
 
-  const initializeAttendance = () => {
-    const classStudents = students.filter(s => s.classId === selectedClass);
-    const today = new Date().toISOString().split('T')[0];
-    
-    const todayAttendance = attendance.filter(a => 
-      classStudents.some(s => s.id === a.studentId) && 
-      a.date === today
-    );
+  const loadAttendance = async () => {
+    if (!user?.id) {
+      Alert.alert('Error', 'User not found. Please login again.');
+      return;
+    }
 
-    const initialData: {[key: string]: string} = {};
-    classStudents.forEach(student => {
-      const existingAttendance = todayAttendance.find(a => a.studentId === student.id);
-      initialData[student.id] = existingAttendance?.status || 'present';
-    });
+    try {
+      const response = await getClassAttendance({
+        teacherId: user.id,
+        date: selectedDate,
+      }).unwrap();
 
-    setAttendanceData(initialData);
-    setHasChanges(false);
+      if (response.success) {
+        setClassData({
+          class: response.data.class,
+          section: response.data.section,
+          students: response.data.students,
+        });
+
+        // Initialize attendance data from API response
+        // Map 'late' status to 'absent' for display (since we removed late option)
+        const initialData: {[key: string]: 'present' | 'absent'} = {};
+        const originalData: {[key: string]: 'present' | 'absent' | null} = {};
+        
+        response.data.students.forEach(student => {
+          let status = student.attendanceStatus || 'present';
+          // Convert 'late' to 'absent' since we removed the late option
+          if (status === 'late') {
+            status = 'absent';
+          }
+          initialData[student.id] = status as 'present' | 'absent';
+          // Store original status, but map 'late' to 'absent' for consistency
+          originalData[student.id] = status === 'late' ? 'absent' : (student.attendanceStatus as 'present' | 'absent' | null);
+        });
+
+        setAttendanceData(initialData);
+        setOriginalAttendanceData(originalData);
+        setHasChanges(false);
+      }
+    } catch (error: any) {
+      console.error('Error loading attendance:', error);
+      const errorMessage = error?.data?.message || 'Failed to load attendance data.';
+      
+      if (errorMessage === 'No class assigned yet') {
+        Alert.alert('No Class Assigned', 'You have not been assigned to a class yet. Please contact your administrator.');
+        setClassData(null);
+      } else {
+        Alert.alert('Error', errorMessage);
+        setClassData(null);
+      }
+    }
   };
 
-  const getClassOptions = () => {
-    return [
-      { id: 'class_1', name: 'Class 1A' },
-      { id: 'class_2', name: 'Class 2B' },
-      { id: 'class_3', name: 'Class 3C' },
-    ];
-  };
-
-  const getClassStudents = () => {
-    return students.filter(s => s.classId === selectedClass);
-  };
-
-  const updateAttendance = (studentId: string, status: string) => {
+  const updateAttendance = (studentId: string, status: 'present' | 'absent') => {
     setAttendanceData(prev => ({
       ...prev,
       [studentId]: status,
     }));
-    setHasChanges(true);
+    
+    // Check if there are changes compared to original
+    const hasChanged = originalAttendanceData[studentId] !== status;
+    const otherStudentsChanged = Object.keys(attendanceData).some(
+      id => id !== studentId && originalAttendanceData[id] !== attendanceData[id]
+    );
+    
+    setHasChanges(hasChanged || otherStudentsChanged || Object.keys(attendanceData).some(
+      id => originalAttendanceData[id] !== (id === studentId ? status : attendanceData[id])
+    ));
   };
 
   const saveAttendance = async () => {
+    if (!user?.id || !classData) {
+      Alert.alert('Error', 'Unable to save attendance. Please try again.');
+      return;
+    }
+
+    setIsSaving(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      // Get only the students that have changed
+      const studentsToUpdate = classData.students.filter(student => {
+        const currentStatus = attendanceData[student.id];
+        const originalStatus = originalAttendanceData[student.id];
+        return currentStatus && currentStatus !== originalStatus;
+      });
+
+      if (studentsToUpdate.length === 0) {
+        Alert.alert('Info', 'No changes to save.');
+        setIsSaving(false);
+        return;
+      }
+
+      // Save attendance for each changed student
+      const savePromises = studentsToUpdate.map(student =>
+        setAttendance({
+          teacherId: user.id!,
+          studentId: student.id,
+          status: attendanceData[student.id]!,
+          date: selectedDate,
+        }).unwrap()
+      );
+
+      await Promise.all(savePromises);
       
-      // TODO: Save to actual data store
-      console.debug('Saving attendance for class:', selectedClass);
-      console.debug('Attendance data:', attendanceData);
-      
-      // Simulate API call
-      await new Promise<void>(resolve => setTimeout(() => resolve(), 1000));
+      // Reload attendance data to get updated status
+      await loadAttendance();
       
       Alert.alert('Success', 'Attendance saved successfully!');
       setHasChanges(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving attendance:', error);
-      Alert.alert('Error', 'Failed to save attendance. Please try again.');
+      const errorMessage = error?.data?.message || 'Failed to save attendance. Please try again.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const resetAttendance = () => {
+    // Reset to original values
+    const resetData: {[key: string]: 'present' | 'absent'} = {};
+    Object.keys(originalAttendanceData).forEach(studentId => {
+      resetData[studentId] = (originalAttendanceData[studentId] || 'present') as 'present' | 'absent';
+    });
+    setAttendanceData(resetData);
+    setHasChanges(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -98,9 +186,43 @@ const TakeAttendanceScreen = () => {
   const getStatusOptions = () => [
     { value: 'present', label: 'Present', color: '#28A745' },
     { value: 'absent', label: 'Absent', color: '#DC3545' },
-    { value: 'late', label: 'Late', color: '#FFC107' },
-    { value: 'excused', label: 'Excused', color: '#6F42C1' },
   ];
+
+  if (isLoadingAttendance && !classData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2F6FED" />
+          <Text style={styles.loadingText}>Loading attendance...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!classData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Take Attendance</Text>
+            <Text style={styles.subtitle}>No class assigned</Text>
+          </View>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              You have not been assigned to a class yet. Please contact your administrator.
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  const summary = {
+    total: classData.students.length,
+    present: Object.values(attendanceData).filter(s => s === 'present').length,
+    absent: Object.values(attendanceData).filter(s => s === 'absent').length,
+    notMarked: classData.students.filter(s => !attendanceData[s.id]).length,
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -109,32 +231,21 @@ const TakeAttendanceScreen = () => {
         <View style={styles.header}>
           <Text style={styles.title}>Take Attendance</Text>
           <Text style={styles.subtitle}>
-            {getClassOptions().find(c => c.id === selectedClass)?.name || 'Select Class'}
+            Class {classData.class} - Section {classData.section}
           </Text>
         </View>
 
-        {/* Class Selector */}
-        <View style={styles.classSelector}>
-          <Text style={styles.selectorLabel}>Class:</Text>
-          <View style={styles.classButtons}>
-            {getClassOptions().map((classOption) => (
-              <TouchableOpacity
-                key={classOption.id}
-                style={[
-                  styles.classButton,
-                  selectedClass === classOption.id && styles.selectedClassButton
-                ]}
-                onPress={() => setSelectedClass(classOption.id)}
-              >
-                <Text style={[
-                  styles.classButtonText,
-                  selectedClass === classOption.id && styles.selectedClassButtonText
-                ]}>
-                  {classOption.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        {/* Date Selector */}
+        <View style={styles.dateSelector}>
+          <Text style={styles.selectorLabel}>Date:</Text>
+          <TextInput
+            style={styles.dateInput}
+            value={selectedDate}
+            onChangeText={setSelectedDate}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#999"
+          />
+          <Text style={styles.dateHint}>Format: YYYY-MM-DD</Text>
         </View>
 
         {/* Status Legend */}
@@ -152,18 +263,22 @@ const TakeAttendanceScreen = () => {
 
         {/* Student List */}
         <View style={styles.studentList}>
-          <Text style={styles.listTitle}>Students ({getClassStudents().length})</Text>
-          {getClassStudents().map((student) => (
+          <Text style={styles.listTitle}>Students ({classData.students.length})</Text>
+          {classData.students.map((student) => (
             <View key={student.id} style={styles.studentItem}>
               <View style={styles.studentInfo}>
                 <View style={styles.studentAvatar}>
                   <Text style={styles.studentAvatarText}>
-                    {student.name.charAt(0)}
+                    {student.firstName.charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 <View style={styles.studentDetails}>
-                  <Text style={styles.studentName}>{student.name}</Text>
-                  <Text style={styles.studentGrade}>Grade {student.grade}</Text>
+                  <Text style={styles.studentName}>
+                    {student.firstName} {student.lastName}
+                  </Text>
+                  <Text style={styles.studentGrade}>
+                    Roll No: {student.classRollNo} • Reg: {student.registrationNo}
+                  </Text>
                 </View>
               </View>
               <View style={styles.statusButtons}>
@@ -175,7 +290,7 @@ const TakeAttendanceScreen = () => {
                       attendanceData[student.id] === option.value && styles.selectedStatusButton,
                       { borderColor: option.color }
                     ]}
-                    onPress={() => updateAttendance(student.id, option.value)}
+                    onPress={() => updateAttendance(student.id, option.value as 'present' | 'absent')}
                   >
                     <Text style={[
                       styles.statusButtonText,
@@ -195,30 +310,45 @@ const TakeAttendanceScreen = () => {
         <View style={styles.summary}>
           <Text style={styles.summaryTitle}>Summary</Text>
           <View style={styles.summaryStats}>
-            {getStatusOptions().map((option) => {
-              const count = Object.values(attendanceData).filter(status => status === option.value).length;
-              return (
-                <View key={option.value} style={styles.summaryItem}>
-                  <Text style={styles.summaryNumber}>{count}</Text>
-                  <Text style={styles.summaryLabel}>{option.label}</Text>
-                </View>
-              );
-            })}
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryNumber}>{summary.total}</Text>
+              <Text style={styles.summaryLabel}>Total</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryNumber, { color: '#28A745' }]}>{summary.present}</Text>
+              <Text style={styles.summaryLabel}>Present</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryNumber, { color: '#DC3545' }]}>{summary.absent}</Text>
+              <Text style={styles.summaryLabel}>Absent</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryNumber, { color: '#6C757D' }]}>{summary.notMarked}</Text>
+              <Text style={styles.summaryLabel}>Not Marked</Text>
+            </View>
           </View>
         </View>
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={[styles.saveButton, !hasChanges && styles.saveButtonDisabled]}
+            style={[styles.saveButton, (!hasChanges || isSaving) && styles.saveButtonDisabled]}
             onPress={saveAttendance}
-            disabled={!hasChanges}
+            disabled={!hasChanges || isSaving}
           >
-            <Text style={[styles.saveButtonText, !hasChanges && styles.saveButtonTextDisabled]}>
-              {hasChanges ? 'Save Changes' : 'No Changes'}
-            </Text>
+            {isSaving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={[styles.saveButtonText, !hasChanges && styles.saveButtonTextDisabled]}>
+                {hasChanges ? 'Save Changes' : 'No Changes'}
+              </Text>
+            )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.resetButton} onPress={initializeAttendance}>
+          <TouchableOpacity 
+            style={styles.resetButton} 
+            onPress={resetAttendance}
+            disabled={isSaving}
+          >
             <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
         </View>
@@ -232,12 +362,51 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
   content: {
     flex: 1,
     padding: 20,
   },
   header: {
     marginBottom: 20,
+  },
+  emptyState: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  dateSelector: {
+    marginBottom: 20,
+  },
+  dateInput: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    marginTop: 8,
+  },
+  dateHint: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
   },
   title: {
     fontSize: 24,
@@ -248,9 +417,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#666',
-  },
-  classSelector: {
-    marginBottom: 20,
   },
   selectorLabel: {
     fontSize: 16,
@@ -412,6 +578,7 @@ const styles = StyleSheet.create({
   summaryStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
   },
   summaryItem: {
     alignItems: 'center',

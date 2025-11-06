@@ -7,60 +7,78 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
+  TextInput,
+  Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { format } from 'date-fns';
 import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../providers/DataProvider';
+import { useGetClassAttendanceMutation } from '../../store/services/attendanceApi';
 import TeacherHeaderRight from '../../components/teacher/TeacherHeaderRight';
 import ProfileModal from './ProfileModal';
 
 const AttendanceListScreen = () => {
+  const navigation = useNavigation<any>();
   const { user } = useAuth();
-  const { students, attendance } = useData();
-  const [selectedClass, setSelectedClass] = useState('class_1');
-  const [loading, setLoading] = useState(true);
+  const [getClassAttendance, { isLoading }] = useGetClassAttendanceMutation();
+  
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [profileModalVisible, setProfileModalVisible] = useState(false);
-  const [classAttendance, setClassAttendance] = useState<any[]>([]);
+  const [classData, setClassData] = useState<{
+    class: string;
+    section: string;
+    summary: {
+      total: number;
+      present: number;
+      absent: number;
+      notMarked: number;
+    };
+    students: Array<{
+      id: string;
+      firstName: string;
+      lastName: string;
+      classRollNo: string;
+      registrationNo: string;
+      attendanceStatus: 'present' | 'absent' | 'late' | null;
+    }>;
+  } | null>(null);
 
   useEffect(() => {
     loadAttendanceData();
-  }, [selectedClass]);
+  }, [selectedDate]);
 
   const loadAttendanceData = async () => {
-    setLoading(true);
-    try {
-      await new Promise<void>(resolve => setTimeout(resolve, 500));
-
-      const classStudents = students.filter(s => s.classId === selectedClass);
-      const today = new Date().toISOString().split('T')[0];
-      
-      const todayAttendance = attendance.filter(a => 
-        classStudents.some(s => s.id === a.studentId) && 
-        a.date === today
-      );
-
-      const attendanceWithStudents = classStudents.map(student => {
-        const studentAttendance = todayAttendance.find(a => a.studentId === student.id);
-        return {
-          ...student,
-          status: studentAttendance?.status || 'not_marked',
-          lastAttendance: studentAttendance?.date || null,
-        };
-      });
-
-      setClassAttendance(attendanceWithStudents);
-    } catch (error) {
-      console.error('Error loading attendance data:', error);
-    } finally {
-      setLoading(false);
+    if (!user?.id) {
+      Alert.alert('Error', 'User not found. Please login again.');
+      return;
     }
-  };
 
-  const getClassOptions = () => {
-    return [
-      { id: 'class_1', name: 'Class 1A' },
-      { id: 'class_2', name: 'Class 2B' },
-      { id: 'class_3', name: 'Class 3C' },
-    ];
+    try {
+      const response = await getClassAttendance({
+        teacherId: user.id,
+        date: selectedDate,
+      }).unwrap();
+
+      if (response.success) {
+        setClassData({
+          class: response.data.class,
+          section: response.data.section,
+          summary: response.data.summary,
+          students: response.data.students,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error loading attendance data:', error);
+      const errorMessage = error?.data?.message || 'Failed to load attendance data.';
+      
+      if (errorMessage === 'No class assigned yet') {
+        Alert.alert('No Class Assigned', 'You have not been assigned to a class yet. Please contact your administrator.');
+        setClassData(null);
+      } else {
+        Alert.alert('Error', errorMessage);
+        setClassData(null);
+      }
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -76,7 +94,7 @@ const AttendanceListScreen = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string | null) => {
     switch (status) {
       case 'present':
         return 'Present';
@@ -89,13 +107,55 @@ const AttendanceListScreen = () => {
     }
   };
 
-  if (loading) {
+  const handleTakeAttendance = () => {
+    navigation.navigate('TakeAttendance', { date: selectedDate });
+  };
+
+  const handleViewReport = () => {
+    navigation.navigate('AttendanceReport');
+  };
+
+  if (isLoading && !classData) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2F6FED" />
           <Text style={styles.loadingText}>Loading attendance...</Text>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!classData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <View style={styles.headerTop}>
+              <Text style={styles.logo}>📚 Padmai</Text>
+              <View style={styles.headerRight}>
+                <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
+                <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
+              </View>
+            </View>
+            <View style={styles.teacherInfo}>
+              <Text style={styles.teacherAvatar}>👩‍🏫</Text>
+              <View style={styles.teacherDetails}>
+                <Text style={styles.teacherName}>{user?.fullName}</Text>
+                <Text style={styles.teacherRole}>Teacher</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
+              You have not been assigned to a class yet. Please contact your administrator.
+            </Text>
+          </View>
+        </ScrollView>
+        <ProfileModal
+          visible={profileModalVisible}
+          onClose={() => setProfileModalVisible(false)}
+        />
       </SafeAreaView>
     );
   }
@@ -119,57 +179,47 @@ const AttendanceListScreen = () => {
               <Text style={styles.teacherRole}>Teacher</Text>
             </View>
           </View>
+          {classData && (
+            <View style={styles.classInfo}>
+              <Text style={styles.classInfoText}>
+                Class {classData.class} - Section {classData.section}
+              </Text>
+            </View>
+          )}
         </View>
 
-        {/* Class Selector */}
-        <View style={styles.classSelector}>
-          <Text style={styles.selectorLabel}>Select Class:</Text>
-          <View style={styles.classButtons}>
-            {getClassOptions().map((classOption) => (
-              <TouchableOpacity
-                key={classOption.id}
-                style={[
-                  styles.classButton,
-                  selectedClass === classOption.id && styles.selectedClassButton
-                ]}
-                onPress={() => setSelectedClass(classOption.id)}
-              >
-                <Text style={[
-                  styles.classButtonText,
-                  selectedClass === classOption.id && styles.selectedClassButtonText
-                ]}>
-                  {classOption.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        {/* Date Selector */}
+        <View style={styles.dateSelector}>
+          <Text style={styles.selectorLabel}>Date:</Text>
+          <TextInput
+            style={styles.dateInput}
+            value={selectedDate}
+            onChangeText={setSelectedDate}
+            placeholder="YYYY-MM-DD"
+            placeholderTextColor="#999"
+          />
+          <Text style={styles.dateHint}>Format: YYYY-MM-DD</Text>
         </View>
 
         {/* Summary Stats */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Today's Summary</Text>
+          <Text style={styles.summaryTitle}>Attendance Summary</Text>
           <View style={styles.summaryStats}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryNumber}>
-                {classAttendance.filter(s => s.status === 'present').length}
-              </Text>
+              <Text style={styles.summaryNumber}>{classData.summary.total}</Text>
+              <Text style={styles.summaryLabel}>Total</Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryNumber, { color: '#28A745' }]}>{classData.summary.present}</Text>
               <Text style={styles.summaryLabel}>Present</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryNumber}>
-                {classAttendance.filter(s => s.status === 'absent').length}
-              </Text>
+              <Text style={[styles.summaryNumber, { color: '#DC3545' }]}>{classData.summary.absent}</Text>
               <Text style={styles.summaryLabel}>Absent</Text>
             </View>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryNumber}>
-                {classAttendance.filter(s => s.status === 'late').length}
-              </Text>
-              <Text style={styles.summaryLabel}>Late</Text>
-            </View>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryNumber}>
-                {classAttendance.filter(s => s.status === 'not_marked').length}
+              <Text style={[styles.summaryNumber, { color: '#FFC107' }]}>
+                {classData.summary.notMarked}
               </Text>
               <Text style={styles.summaryLabel}>Not Marked</Text>
             </View>
@@ -178,34 +228,33 @@ const AttendanceListScreen = () => {
 
         {/* Student List */}
         <View style={styles.studentList}>
-          <Text style={styles.listTitle}>Students ({classAttendance.length})</Text>
-          {classAttendance.map((student) => (
+          <Text style={styles.listTitle}>Students ({classData.students.length})</Text>
+          {classData.students.map((student) => (
             <View key={student.id} style={styles.studentItem}>
               <View style={styles.studentInfo}>
                 <View style={styles.studentAvatar}>
                   <Text style={styles.studentAvatarText}>
-                    {student.name.charAt(0)}
+                    {student.firstName.charAt(0).toUpperCase()}
                   </Text>
                 </View>
                 <View style={styles.studentDetails}>
-                  <Text style={styles.studentName}>{student.name}</Text>
-                  <Text style={styles.studentGrade}>Grade {student.grade}</Text>
+                  <Text style={styles.studentName}>
+                    {student.firstName} {student.lastName}
+                  </Text>
+                  <Text style={styles.studentGrade}>
+                    Roll No: {student.classRollNo} • Reg: {student.registrationNo}
+                  </Text>
                 </View>
               </View>
               <View style={styles.studentStatus}>
                 <View style={[
                   styles.statusChip,
-                  { backgroundColor: getStatusColor(student.status) }
+                  { backgroundColor: getStatusColor(student.attendanceStatus || 'not_marked') }
                 ]}>
                   <Text style={styles.statusText}>
-                    {getStatusText(student.status)}
+                    {getStatusText(student.attendanceStatus)}
                   </Text>
                 </View>
-                {student.lastAttendance && (
-                  <Text style={styles.lastAttendanceText}>
-                    Last: {new Date(student.lastAttendance).toLocaleDateString()}
-                  </Text>
-                )}
               </View>
             </View>
           ))}
@@ -213,10 +262,10 @@ const AttendanceListScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.primaryButton}>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleTakeAttendance}>
             <Text style={styles.primaryButtonText}>Take Attendance</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.secondaryButton}>
+          <TouchableOpacity style={styles.secondaryButton} onPress={handleViewReport}>
             <Text style={styles.secondaryButtonText}>View Report</Text>
           </TouchableOpacity>
         </View>
@@ -285,6 +334,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#B3D4FF',
   },
+  classInfo: {
+    marginTop: 8,
+  },
+  classInfoText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -299,8 +356,34 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  classSelector: {
+  dateSelector: {
     marginBottom: 20,
+  },
+  dateInput: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    marginTop: 8,
+  },
+  dateHint: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  emptyState: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   selectorLabel: {
     fontSize: 16,
@@ -353,6 +436,7 @@ const styles = StyleSheet.create({
   summaryStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
   },
   summaryItem: {
     alignItems: 'center',
@@ -361,6 +445,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2F6FED',
+    minWidth: 40,
+    textAlign: 'center',
   },
   summaryLabel: {
     fontSize: 14,

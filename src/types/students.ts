@@ -27,6 +27,12 @@ export interface StudentApi {
   classRollNo: string;
   createdAt?: string;
   updatedAt?: string;
+  attendanceStatus?: 'present' | 'absent' | null;
+  attendanceHistory?: Array<{
+    date: string;
+    status: string;
+    updatedAt: string;
+  }>;
 }
 
 export interface StudentFormData {
