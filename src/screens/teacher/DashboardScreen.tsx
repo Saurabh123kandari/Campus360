@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   TextInput,
   Alert,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
@@ -146,16 +147,23 @@ const DashboardScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={styles.logo}>📚 Padmai</Text>
+            <View style={styles.logoContainer}>
+              <Image 
+                source={require('../../assets/images/kilbil-logo.png')} 
+                style={styles.logoImage} 
+                resizeMode="contain"
+              />
+              <Text style={styles.logoText}>KILBIL HIGH SCHOOL</Text>
+            </View>
             <View style={styles.headerRight}>
-              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
+              <Text style={styles.welcomeText}>Welcome back, {(user?.name || 'User')?.split(' ')[0]}</Text>
               <TeacherHeaderRight onPress={() => setProfileModalVisible(true)} />
             </View>
           </View>
           <View style={styles.teacherInfo}>
             <Text style={styles.teacherAvatar}>👩‍🏫</Text>
             <View style={styles.teacherDetails}>
-              <Text style={styles.teacherName}>{user?.fullName}</Text>
+              <Text style={styles.teacherName}>{user?.name || 'User'}</Text>
               <Text style={styles.teacherRole}>Mathematics Teacher</Text>
             </View>
           </View>
@@ -365,7 +373,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#2F6FED',
-    paddingTop: 40,
+    paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
     marginBottom: 20,
@@ -380,16 +388,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flexShrink: 1,
   },
-  logo: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    maxWidth: '70%',
+  },
+  logoImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '700',
     color: '#fff',
+    letterSpacing: 0.3,
+    lineHeight: 22,
+    flexShrink: 1,
   },
   welcomeText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#B3D4FF',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+    lineHeight: 20,
+    flexShrink: 1,
   },
   teacherInfo: {
     flexDirection: 'row',

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -192,16 +193,23 @@ const DashboardScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={styles.logo}>📚 Padmai</Text>
+            <View style={styles.logoContainer}>
+              <Image 
+                source={require('../../assets/images/kilbil-logo.png')} 
+                style={styles.logoImage} 
+                resizeMode="contain"
+              />
+              <Text style={styles.logoText}>KILBIL HIGH SCHOOL</Text>
+            </View>
             <View style={styles.headerRight}>
-              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
+              <Text style={styles.welcomeText}>Welcome back, {(user?.name || 'User')?.split(' ')[0]}</Text>
               <AdminHeaderRight />
             </View>
           </View>
           <View style={styles.adminInfo}>
             <Text style={styles.adminAvatar}>👨‍💼</Text>
             <View style={styles.adminDetails}>
-              <Text style={styles.adminName}>{user?.fullName}</Text>
+              <Text style={styles.adminName}>{user?.name || 'User'}</Text>
               <Text style={styles.adminRole}>School Administrator</Text>
             </View>
           </View>
@@ -361,33 +369,51 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#2F6FED',
-    paddingTop: 44,
-    paddingBottom: 24,
+    paddingTop: 50,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
+    flexShrink: 1,
   },
-  logo: {
-    fontSize: 26,
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    maxWidth: '70%',
+  },
+  logoImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+  },
+  logoText: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#fff',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
+    lineHeight: 22,
+    flexShrink: 1,
   },
   welcomeText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#B3D4FF',
-    lineHeight: 22,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+    lineHeight: 20,
+    flexShrink: 1,
   },
   adminInfo: {
     flexDirection: 'row',
