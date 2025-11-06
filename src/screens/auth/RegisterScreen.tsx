@@ -10,18 +10,21 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { useRegisterMutation } from '../../store/services/authApi';
 import { persistCredentials, setCredentials } from '../../store/slices/authSlice';
 import { useToast } from '../../contexts/ToastContext';
 import { useData } from '../../providers/DataProvider';
 import { Role } from '../../types/auth';
+import AppLogo from '../../components/common/AppLogo';
 
 interface RegisterScreenProps {
-  onNavigateToLogin: () => void;
+  onNavigateToLogin?: () => void;
 }
 
 const RegisterScreen = ({ onNavigateToLogin }: RegisterScreenProps) => {
+  const navigation = useNavigation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -241,7 +244,13 @@ const RegisterScreen = ({ onNavigateToLogin }: RegisterScreenProps) => {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account?</Text>
-          <TouchableOpacity onPress={onNavigateToLogin}>
+          <TouchableOpacity onPress={() => {
+            if (onNavigateToLogin) {
+              onNavigateToLogin();
+            } else if (navigation) {
+              (navigation as any).navigate('Login');
+            }
+          }}>
             <Text style={styles.footerLink}>Sign In</Text>
           </TouchableOpacity>
         </View>

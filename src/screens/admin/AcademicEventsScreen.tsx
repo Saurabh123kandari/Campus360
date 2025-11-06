@@ -203,14 +203,14 @@ const AcademicEventsScreen = () => {
               <AppLogo />
             </View>
             <View style={styles.headerRight}>
-              <Text style={styles.welcomeText}>Welcome, {user?.fullName?.split(' ')[0]}!</Text>
+              <Text style={styles.welcomeText}>Welcome, {(user as any)?.name?.split(' ')[0] || 'User'}!</Text>
               <AdminHeaderRight />
             </View>
           </View>
           <View style={styles.adminInfo}>
             <Text style={styles.adminAvatar}>👨‍💼</Text>
             <View style={styles.adminDetails}>
-              <Text style={styles.adminName}>{user?.fullName}</Text>
+              <Text style={styles.adminName}>{(user as any)?.name || 'Admin'}</Text>
               <Text style={styles.adminRole}>School Administrator</Text>
             </View>
           </View>

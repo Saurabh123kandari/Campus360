@@ -10,6 +10,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { useLoginMutation } from '../../store/services/authApi';
 import { persistCredentials, setCredentials } from '../../store/slices/authSlice';
@@ -17,10 +18,11 @@ import { useToast } from '../../contexts/ToastContext';
 import AppLogo from '../../components/common/AppLogo';
 
 interface LoginScreenProps {
-  onNavigateToRegister: () => void;
+  onNavigateToRegister?: () => void;
 }
 
 const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -187,22 +189,19 @@ const LoginScreen = ({ onNavigateToRegister }: LoginScreenProps) => {
               <Text style={styles.quickLoginIcon}>👩‍🏫</Text>
               <Text style={styles.quickLoginText}>Login as Teacher</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.quickLoginButton}
-              onPress={() => handleQuickLogin('schoolOwner')}
-              disabled={loading}
-            >
-              <Text style={styles.quickLoginIcon}>🏫</Text>
-              <Text style={styles.quickLoginText}>Login as School Owner</Text>
-            </TouchableOpacity>
           </View>
 
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account?</Text>
-          <TouchableOpacity onPress={onNavigateToRegister}>
+          <TouchableOpacity onPress={() => {
+            if (onNavigateToRegister) {
+              onNavigateToRegister();
+            } else if (navigation) {
+              (navigation as any).navigate('Register');
+            }
+          }}>
             <Text style={styles.footerLink}>Sign Up</Text>
           </TouchableOpacity>
         </View>
