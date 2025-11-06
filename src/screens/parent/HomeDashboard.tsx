@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { useAuth } from '../../contexts/AuthContext';
@@ -50,6 +51,7 @@ interface RecentActivity {
 }
 
 const HomeDashboard = () => {
+  const navigation = useNavigation<any>();
   const { user } = useAuth();
   const reduxUser = useSelector((state: RootState) => state.auth.user);
   const { students, events, attendance, isLoading: dataLoading } = useData();
@@ -219,22 +221,22 @@ const HomeDashboard = () => {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'attendance':
-        Alert.alert('Navigation', 'Opening Attendance screen...');
+        navigation.navigate('Attendance');
         break;
       case 'calendar':
-        Alert.alert('Navigation', 'Opening Calendar screen...');
+        navigation.navigate('Calendar');
         break;
       case 'payment':
-        Alert.alert('Navigation', 'Opening Payments screen...');
+        navigation.navigate('Payments');
         break;
       case 'message':
-        Alert.alert('Navigation', 'Opening Chat screen...');
+        navigation.navigate('Chat');
         break;
     }
   };
 
   const handleViewPayments = () => {
-    Alert.alert('Navigation', 'Opening Payments screen...');
+    navigation.navigate('Payments');
   };
 
   const handleAddStudentSuccess = () => {

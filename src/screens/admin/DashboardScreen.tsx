@@ -315,15 +315,24 @@ const DashboardScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('AdminPaymentsTab')}
+            >
               <Text style={styles.quickActionIcon}>💳</Text>
               <Text style={styles.quickActionText}>View Payments</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('AdminStatisticsTab')}
+            >
               <Text style={styles.quickActionIcon}>📊</Text>
               <Text style={styles.quickActionText}>Attendance Report</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('AdminEventsTab')}
+            >
               <Text style={styles.quickActionIcon}>📅</Text>
               <Text style={styles.quickActionText}>Create Event</Text>
             </TouchableOpacity>

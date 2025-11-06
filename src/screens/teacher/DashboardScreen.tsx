@@ -341,15 +341,24 @@ const DashboardScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('TeacherAttendanceTab')}
+            >
               <Text style={styles.quickActionIcon}>✅</Text>
               <Text style={styles.quickActionText}>Take Attendance</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('TeacherCalendarTab')}
+            >
               <Text style={styles.quickActionIcon}>📅</Text>
               <Text style={styles.quickActionText}>View Calendar</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionButton}>
+            <TouchableOpacity 
+              style={styles.quickActionButton}
+              onPress={() => navigation.navigate('TeacherChatTab')}
+            >
               <Text style={styles.quickActionIcon}>💬</Text>
               <Text style={styles.quickActionText}>Chat</Text>
             </TouchableOpacity>
