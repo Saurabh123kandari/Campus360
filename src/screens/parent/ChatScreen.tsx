@@ -256,37 +256,47 @@ const ChatScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {chatThreads.map((thread) => (
-        <TouchableOpacity
-          key={thread.id}
-          style={[
-            styles.chatThreadItem,
-            thread.isActive && styles.activeChatThread,
-          ]}
-          onPress={() => handleThreadSelect(thread.id)}
-        >
-          <View style={styles.threadInfo}>
-            <Text style={styles.threadTitle}>{thread.title}</Text>
-            {thread.lastMessage && (
-              <Text style={styles.lastMessage} numberOfLines={1}>
-                {thread.lastMessage.content}
-              </Text>
-            )}
-          </View>
-          <View style={styles.threadMeta}>
-            {thread.lastMessage && (
-              <Text style={styles.lastMessageTime}>
-                {formatTime(thread.lastMessage.timestamp)}
-              </Text>
-            )}
-            {thread.unreadCount > 0 && (
-              <View style={styles.unreadBadge}>
-                <Text style={styles.unreadCount}>{thread.unreadCount}</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-      ))}
+      {chatThreads.length > 0 ? (
+        chatThreads.map((thread) => (
+          <TouchableOpacity
+            key={thread.id}
+            style={[
+              styles.chatThreadItem,
+              thread.isActive && styles.activeChatThread,
+            ]}
+            onPress={() => handleThreadSelect(thread.id)}
+          >
+            <View style={styles.threadInfo}>
+              <Text style={styles.threadTitle}>{thread.title}</Text>
+              {thread.lastMessage && (
+                <Text style={styles.lastMessage} numberOfLines={1}>
+                  {thread.lastMessage.content}
+                </Text>
+              )}
+            </View>
+            <View style={styles.threadMeta}>
+              {thread.lastMessage && (
+                <Text style={styles.lastMessageTime}>
+                  {formatTime(thread.lastMessage.timestamp)}
+                </Text>
+              )}
+              {thread.unreadCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadCount}>{thread.unreadCount}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        ))
+      ) : (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateIcon}>💬</Text>
+          <Text style={styles.emptyStateTitle}>No Conversations</Text>
+          <Text style={styles.emptyStateText}>
+            Start a conversation with teachers and school staff.
+          </Text>
+        </View>
+      )}
     </View>
   );
 
