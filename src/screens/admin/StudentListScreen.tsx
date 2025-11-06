@@ -153,7 +153,7 @@ const StudentListScreen = () => {
                     <Text style={styles.detailValue}>{student.section}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Roll No:</Text>
+                    <Text style={styles.detailLabel}>Student ID:</Text>
                     <Text style={styles.detailValue}>{student.classRollNo}</Text>
                   </View>
                 </View>

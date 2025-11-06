@@ -110,7 +110,7 @@ const DashboardScreen = () => {
 
   const handleViewProfile = (student: ClassStudentApi) => {
     // TODO: Navigate to student profile or show modal
-    Alert.alert('Student Profile', `${student.firstName} ${student.lastName}\nRoll No: ${student.classRollNo}\nRegistration: ${student.registrationNo}`);
+    Alert.alert('Student Profile', `${student.firstName} ${student.lastName}\nStudent ID: ${student.classRollNo}\nRegistration: ${student.registrationNo}`);
   };
 
   const handleContactAdmin = () => {
@@ -244,7 +244,7 @@ const DashboardScreen = () => {
                     style={[styles.sortButton, sortBy === 'rollNo' && styles.sortButtonActive]}
                     onPress={() => setSortBy('rollNo')}
                   >
-                    <Text style={[styles.sortButtonText, sortBy === 'rollNo' && styles.sortButtonTextActive]}>Roll No</Text>
+                    <Text style={[styles.sortButtonText, sortBy === 'rollNo' && styles.sortButtonTextActive]}>Student ID</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.sortButton, sortBy === 'registrationNo' && styles.sortButtonActive]}
@@ -279,7 +279,7 @@ const DashboardScreen = () => {
                           {student.firstName} {student.lastName}
                         </Text>
                         <Text style={styles.studentDetails}>
-                          Roll No: {student.classRollNo} • Reg: {student.registrationNo}
+                          Student ID: {student.classRollNo} • Reg: {student.registrationNo}
                         </Text>
                       </View>
                       <View style={styles.studentActions}>

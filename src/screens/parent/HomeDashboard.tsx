@@ -267,8 +267,6 @@ const HomeDashboard = () => {
   }
 
   const currentUser = reduxUser || user;
-  const childId = (currentUser as any)?.childId;
-  const child = childId ? students.find(s => s.id === childId) : students.find(s => s.id === 's_1');
 
   const formatCurrency = (amount: number) => {
     try {
@@ -297,15 +295,6 @@ const HomeDashboard = () => {
               <ProfileIcon />
             </View>
           </View>
-          {child && (
-            <View style={styles.childInfo}>
-              <Text style={styles.childAvatar}>👦</Text>
-              <View style={styles.childDetails}>
-                <Text style={styles.childName}>{child.name}</Text>
-                <Text style={styles.childGrade}>Grade {child.grade}</Text>
-              </View>
-            </View>
-          )}
         </View>
 
         {/* Welcome Card */}
@@ -554,30 +543,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     lineHeight: 20,
     flexShrink: 1,
-  },
-  childInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 12,
-  },
-  childAvatar: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  childDetails: {
-    flex: 1,
-  },
-  childName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 2,
-  },
-  childGrade: {
-    fontSize: 14,
-    color: '#B3D4FF',
   },
   summarySection: {
     padding: 20,

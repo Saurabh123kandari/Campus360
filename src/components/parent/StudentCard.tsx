@@ -48,7 +48,7 @@ const StudentCard: React.FC<StudentCardProps> = ({ student, onPress }) => {
         <View style={styles.infoContainer}>
           <Text style={styles.name}>{fullName}</Text>
           <Text style={styles.classSection}>Class {classSection}</Text>
-          <Text style={styles.rollNo}>Roll No: {student.classRollNo}</Text>
+          <Text style={styles.rollNo}>Student ID: {student.classRollNo}</Text>
         </View>
 
         {/* Attendance Status Badge */}

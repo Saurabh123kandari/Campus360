@@ -242,7 +242,7 @@ const AttendanceListScreen = () => {
                     {student.firstName} {student.lastName}
                   </Text>
                   <Text style={styles.studentGrade}>
-                    Roll No: {student.classRollNo} • Reg: {student.registrationNo}
+                    Student ID: {student.classRollNo} • Reg: {student.registrationNo}
                   </Text>
                 </View>
               </View>

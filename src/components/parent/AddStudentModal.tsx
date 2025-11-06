@@ -77,7 +77,7 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClose, onS
     }
 
     if (!formData.classRollNo.trim()) {
-      newErrors.classRollNo = 'Class roll number is required';
+      newErrors.classRollNo = 'Student ID is required';
     }
 
     setErrors(newErrors);
@@ -225,9 +225,9 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClose, onS
                 {errors.registrationNo && <Text style={styles.errorText}>{errors.registrationNo}</Text>}
               </View>
 
-              {/* Class Roll No */}
+              {/* Student ID */}
               <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Class Roll Number *</Text>
+                <Text style={styles.label}>Student ID *</Text>
                 <TextInput
                   style={[styles.input, errors.classRollNo && styles.inputError]}
                   value={formData.classRollNo}
