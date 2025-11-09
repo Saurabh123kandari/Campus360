@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,30 +9,88 @@ import {
   TextInput,
   Alert,
   Modal,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { useData } from '../../providers/DataProvider';
 import AdminHeaderRight from '../../components/admin/AdminHeaderRight';
 import AppLogo from '../../components/common/AppLogo';
 import PaymentRow from '../../components/admin/PaymentRow';
 import { Payment } from '../../components/admin/PaymentRow';
+import { useGetPaymentsByStudentIdMutation } from '../../store/services/paymentsApi';
+import { PaymentApiItem } from '../../types/payments';
 
 const PaymentsScreen = () => {
   const { user } = useAuth();
-  const { paymentsAdmin } = useData();
+  const [fetchPayments, { isLoading, isError, error }] = useGetPaymentsByStudentIdMutation();
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [receiptReference, setReceiptReference] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Static studentId as requested
+  const studentId = 'STU001';
+
+  // Transform PaymentApiItem to Payment type
+  const transformPaymentApiItem = (apiItem: PaymentApiItem): Payment => {
+    // Use createdAt as dueDate if available, otherwise use a default
+    const dueDate = apiItem.createdAt || new Date().toISOString();
+    const dueDateObj = new Date(dueDate);
+    const now = new Date();
+    
+    // Derive status based on dates
+    // Since API doesn't provide payment status, we'll default to 'due'
+    // If dueDate is in the past, mark as 'overdue'
+    // If dueDate is in the future, mark as 'due'
+    // Note: We can't determine 'paid' status without additional API fields
+    let status: 'due' | 'paid' | 'overdue' = 'due';
+    if (dueDateObj < now) {
+      status = 'overdue';
+    }
+
+    return {
+      id: apiItem._id,
+      parentId: '', // Not provided by API
+      parentName: 'Parent', // Default since not provided by API
+      studentId: apiItem.studentId,
+      studentName: apiItem.studentName,
+      amount: apiItem.amount,
+      dueDate: dueDate,
+      status: status,
+      paidOn: undefined, // Not provided by API
+      reference: undefined, // Not provided by API
+      reminders: 0, // Default value
+    };
+  };
+
+  // Fetch payments from API
+  const loadPaymentsFromAPI = useCallback(async () => {
+    try {
+      const response = await fetchPayments({ studentId }).unwrap();
+      if (response.success && response.data?.payments) {
+        const transformedPayments = response.data.payments.map(transformPaymentApiItem);
+        setPayments(transformedPayments);
+      } else {
+        setPayments([]);
+      }
+    } catch (err) {
+      console.error('Error fetching payments:', err);
+      setPayments([]);
+    }
+  }, [fetchPayments, studentId]);
+
+  // Initial load
   useEffect(() => {
-    loadPayments();
-  }, [paymentsAdmin, searchQuery, statusFilter]);
+    loadPaymentsFromAPI();
+  }, [loadPaymentsFromAPI]);
 
-  const loadPayments = () => {
-    let filtered = [...paymentsAdmin];
+  // Filter payments based on search and status
+  useEffect(() => {
+    let filtered = [...payments];
 
     // Apply status filter
     if (statusFilter !== 'all') {
@@ -45,12 +103,20 @@ const PaymentsScreen = () => {
       filtered = filtered.filter(p => 
         p.parentName.toLowerCase().includes(query) ||
         p.studentName.toLowerCase().includes(query) ||
-        p.reference?.toLowerCase().includes(query)
+        p.reference?.toLowerCase().includes(query) ||
+        p.studentId.toLowerCase().includes(query)
       );
     }
 
     setFilteredPayments(filtered);
-  };
+  }, [payments, searchQuery, statusFilter]);
+
+  // Handle refresh
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadPaymentsFromAPI();
+    setRefreshing(false);
+  }, [loadPaymentsFromAPI]);
 
   const handleMarkReceived = (payment: Payment) => {
     setSelectedPayment(payment);
@@ -88,19 +154,57 @@ const PaymentsScreen = () => {
 
   const getStatusCounts = () => {
     const counts = {
-      all: paymentsAdmin.length,
-      due: paymentsAdmin.filter(p => p.status === 'due').length,
-      paid: paymentsAdmin.filter(p => p.status === 'paid').length,
-      overdue: paymentsAdmin.filter(p => p.status === 'overdue').length,
+      all: payments.length,
+      due: payments.filter(p => p.status === 'due').length,
+      paid: payments.filter(p => p.status === 'paid').length,
+      overdue: payments.filter(p => p.status === 'overdue').length,
     };
     return counts;
   };
 
   const statusCounts = getStatusCounts();
 
+  // Show loading state
+  if (isLoading && payments.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2F6FED" />
+          <Text style={styles.loadingText}>Loading payments...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state (only if we have no payments to show)
+  if (isError && payments.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>Failed to load payments</Text>
+          <Text style={styles.errorSubtext}>
+            {error && 'data' in error ? String(error.data) : 'Please try again later'}
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={loadPaymentsFromAPI}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -405,6 +509,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#DC3545',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#6c757d',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#2F6FED',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
