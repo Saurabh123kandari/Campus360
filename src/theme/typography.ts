@@ -152,3 +152,4 @@ export const typographyConfig: TypographyConfig = {
   weights: FONT_WEIGHTS,
 };
 
+
