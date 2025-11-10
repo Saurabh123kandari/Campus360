@@ -99,3 +99,36 @@ export interface GetClassStudentsPayload {
   teacherId: string;
 }
 
+export interface GetParentStudentsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    students: StudentApi[];
+    count?: number;
+  };
+}
+
+export type AttendanceStatusApi = 'present' | 'absent' | 'holiday' | 'not_marked';
+
+export interface AttendanceHistoryEntryApi {
+  date: string;
+  status: AttendanceStatusApi;
+  updatedAt: string | null;
+}
+
+export interface AttendanceHistoryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    student: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      class: string;
+      section: string;
+    };
+    history: AttendanceHistoryEntryApi[];
+    count: number;
+  };
+}
+

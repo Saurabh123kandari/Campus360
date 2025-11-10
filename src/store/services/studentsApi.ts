@@ -8,6 +8,7 @@ import {
   DeleteStudentResponse,
   GetClassStudentsPayload,
   GetClassStudentsResponse,
+  GetParentStudentsResponse,
 } from '../../types/students';
 
 export const studentsApi = baseApi.injectEndpoints({
@@ -19,7 +20,7 @@ export const studentsApi = baseApi.injectEndpoints({
         body,
       }),
     }),
-    getStudentsByParentId: builder.mutation<GetStudentsResponse, { parentId: string }>({
+    getStudentsByParentId: builder.mutation<GetParentStudentsResponse, { parentId: string }>({
       query: (body) => ({
         url: '/getParentStudent',
         method: 'POST',

@@ -1,4 +1,5 @@
 import { baseApi } from '../api/baseApi';
+import { AttendanceHistoryResponse } from '../../types/students';
 
 export interface AttendanceStudent {
   id: string;
@@ -79,12 +80,23 @@ export const attendanceApi = baseApi.injectEndpoints({
         },
       }),
     }),
+    getAttendanceHistory: builder.mutation<
+      AttendanceHistoryResponse,
+      { studentId: string }
+    >({
+      query: (body) => ({
+        url: '/getAttendanceHistory',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
 export const {
   useGetClassAttendanceMutation,
   useSetAttendanceMutation,
+  useGetAttendanceHistoryMutation,
 } = attendanceApi;
 
 
