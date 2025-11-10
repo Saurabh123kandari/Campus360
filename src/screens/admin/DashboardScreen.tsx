@@ -18,7 +18,7 @@ import AdminHeaderRight from '../../components/admin/AdminHeaderRight';
 import StatCard from '../../components/admin/StatCard';
 import PaymentRow from '../../components/admin/PaymentRow';
 import { Payment } from '../../components/admin/PaymentRow';
-import { useGetTeachersQuery } from '../../store/services/teachersApi';
+import { useGetTeachersQuery, useGetAllStudentsQuery } from '../../store/services/teachersApi';
 import WelcomeCard from '../../components/WelcomeCard';
 import WelcomeCarouselModal from '../../components/WelcomeCarouselModal';
 import { trackWelcomeCardImpression } from '../../utils/analytics';
@@ -37,6 +37,7 @@ const DashboardScreen = () => {
   const { user } = useAuth();
   const { students, attendance, events, paymentsAdmin } = useData();
   const { data: teachersData, isLoading: teachersLoading } = useGetTeachersQuery();
+  const { data: studentsData, isLoading: studentsLoading } = useGetAllStudentsQuery();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     totalStudents: 0,
@@ -51,18 +52,40 @@ const DashboardScreen = () => {
   const [isCarouselVisible, setIsCarouselVisible] = useState(false);
 
   useEffect(() => {
+    if (studentsLoading || teachersLoading) {
+      return;
+    }
     loadDashboardData();
+  }, [
+    studentsLoading,
+    teachersLoading,
+    students,
+    attendance,
+    events,
+    paymentsAdmin,
+    teachersData,
+    studentsData,
+  ]);
+
+  useEffect(() => {
     trackWelcomeCardImpression('admin');
-  }, [students, attendance, events, paymentsAdmin, teachersData]);
+  }, []);
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
       // Calculate total students
-      const totalStudents = students.length;
+      const totalStudents =
+        studentsData?.data?.count ??
+        studentsData?.data?.students?.length ??
+        students.length ??
+        0;
 
       // Get total teachers from API
-      const totalTeachers = teachersData?.data?.count || 0;
+      const totalTeachers =
+        teachersData?.data?.count ??
+        teachersData?.data?.teachers?.length ??
+        0;
 
       // Calculate average attendance for current term
       const today = new Date();
@@ -176,7 +199,7 @@ const DashboardScreen = () => {
     Alert.alert('Export CSV', 'CSV export functionality would be implemented here');
   };
 
-  if (loading || teachersLoading) {
+  if (loading || teachersLoading || studentsLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
