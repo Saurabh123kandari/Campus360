@@ -20,6 +20,8 @@ import {
   Teacher,
 } from '../../store/services/teachersApi';
 import AdminHeaderRight from '../../components/admin/AdminHeaderRight';
+import DropdownSelect from '../../components/common/DropdownSelect';
+import { CLASS_OPTIONS, SECTION_OPTIONS } from '../../constants/classSectionOptions';
 
 const TeacherListScreen = () => {
   const navigation = useNavigation();
@@ -274,27 +276,24 @@ const TeacherListScreen = () => {
 
                 <View style={styles.modalForm}>
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Class *</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="e.g., 10, 11, 12"
-                      placeholderTextColor="#999"
+                    <DropdownSelect
+                      label="Class *"
                       value={classValue}
-                      onChangeText={setClassValue}
-                      autoCapitalize="none"
+                      options={CLASS_OPTIONS}
+                      placeholder="Select class"
+                      onSelect={setClassValue}
+                      disabled={isAssigning}
                     />
                   </View>
 
                   <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>Section *</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="e.g., A, B, C"
-                      placeholderTextColor="#999"
+                    <DropdownSelect
+                      label="Section *"
                       value={sectionValue}
-                      onChangeText={setSectionValue}
-                      autoCapitalize="characters"
-                      maxLength={1}
+                      options={SECTION_OPTIONS}
+                      placeholder="Select section"
+                      onSelect={setSectionValue}
+                      disabled={isAssigning}
                     />
                   </View>
 
@@ -609,6 +608,8 @@ const styles = StyleSheet.create({
 });
 
 export default TeacherListScreen;
+
+
 
 
 

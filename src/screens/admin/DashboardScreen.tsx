@@ -267,7 +267,7 @@ const DashboardScreen = () => {
         </View>
 
         {/* Recent Payments */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Payments</Text>
             <TouchableOpacity style={styles.viewAllButton}>
@@ -283,10 +283,10 @@ const DashboardScreen = () => {
               onViewHistory={handleViewHistory}
             />
           ))}
-        </View>
+        </View> */}
 
         {/* Recent Attendance */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Today's Attendance by Class</Text>
           {recentAttendance.map((classData) => (
             <View key={classData.classId} style={styles.attendanceCard}>
@@ -309,7 +309,7 @@ const DashboardScreen = () => {
               </Text>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* Quick Actions */}
         <View style={styles.section}>

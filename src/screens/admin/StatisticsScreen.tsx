@@ -208,7 +208,7 @@ const StatisticsScreen = () => {
       </View>
 
       {/* Attendance Chart */}
-      <View style={styles.chartSection}>
+      {/* <View style={styles.chartSection}>
         <Text style={styles.sectionTitle}>Attendance by Class</Text>
         {[...new Set(attendanceData.map(s => s.className))].map(className => {
           const classStudents = attendanceData.filter(s => s.className === className);
@@ -236,7 +236,7 @@ const StatisticsScreen = () => {
             </View>
           );
         })}
-      </View>
+      </View> */}
 
       {/* Student List */}
       <View style={styles.studentListSection}>

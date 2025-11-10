@@ -15,6 +15,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useAddStudentMutation } from '../../store/services/studentsApi';
 import { StudentFormData } from '../../types/students';
+import DropdownSelect from '../common/DropdownSelect';
+import { CLASS_OPTIONS, SECTION_OPTIONS } from '../../constants/classSectionOptions';
 
 interface AddStudentModalProps {
   visible: boolean;
@@ -185,30 +187,28 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({ visible, onClose, onS
 
               {/* Class */}
               <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Class *</Text>
-                <TextInput
-                  style={[styles.input, errors.class && styles.inputError]}
+                <DropdownSelect
+                  label="Class *"
                   value={formData.class}
-                  onChangeText={(text) => updateField('class', text)}
-                  placeholder="e.g., 10"
-                  placeholderTextColor="#999"
-                  editable={!isLoading}
+                  options={CLASS_OPTIONS}
+                  placeholder="Select class"
+                  onSelect={(value) => updateField('class', value)}
+                  error={errors.class}
+                  disabled={isLoading}
                 />
-                {errors.class && <Text style={styles.errorText}>{errors.class}</Text>}
               </View>
 
               {/* Section */}
               <View style={styles.fieldContainer}>
-                <Text style={styles.label}>Section *</Text>
-                <TextInput
-                  style={[styles.input, errors.section && styles.inputError]}
+                <DropdownSelect
+                  label="Section *"
                   value={formData.section}
-                  onChangeText={(text) => updateField('section', text)}
-                  placeholder="e.g., A"
-                  placeholderTextColor="#999"
-                  editable={!isLoading}
+                  options={SECTION_OPTIONS}
+                  placeholder="Select section"
+                  onSelect={(value) => updateField('section', value)}
+                  error={errors.section}
+                  disabled={isLoading}
                 />
-                {errors.section && <Text style={styles.errorText}>{errors.section}</Text>}
               </View>
 
               {/* Registration No */}

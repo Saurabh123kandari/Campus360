@@ -182,7 +182,8 @@ const RegisterScreen = ({ onNavigateToLogin }: RegisterScreenProps) => {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Role *</Text>
             <View style={styles.roleContainer}>
-              {(['parent', 'teacher', 'schoolOwner'] as const).map((roleOption) => (
+              {(['parent', 'teacher'] as const).map((roleOption) => (
+                // {(['parent', 'teacher', 'schoolOwner'] as const).map((roleOption) => (  
                 <TouchableOpacity
                   key={roleOption}
                   style={[
